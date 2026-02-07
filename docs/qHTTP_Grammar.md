@@ -60,6 +60,10 @@ entanglement-id = token
 
 observer-id = token
 
+quantum-coherence = float *( "," OWS float )
+
+entanglement-signature = token
+
 ; ABNF Core Rules & HTTP/1.1 Fragments
 origin-form    = absolute-path [ "?" query ]
 absolute-form  = absolute-URI

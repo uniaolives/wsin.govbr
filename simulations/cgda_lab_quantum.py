@@ -335,14 +335,15 @@ class CGDALab:
             nullspace_threshold = 1e-10
             nullspace_indices = np.where(s < nullspace_threshold)[0]
 
+            rank = np.sum(s > nullspace_threshold)
             if len(nullspace_indices) > 0:
                 geometry.allowed_subspace = Vh[nullspace_indices].T
             else:
                 # No exact nullspace, use smallest singular vectors
                 geometry.allowed_subspace = Vh[-1:].T
 
-            # Forbidden subspace is rowspace of C
-            geometry.forbidden_subspace = U[:, :len(nullspace_indices)].T if len(nullspace_indices) > 0 else U.T
+            # Forbidden subspace is rowspace of C (orthogonal to nullspace)
+            geometry.forbidden_subspace = Vh[:rank]
 
             # Eigenanalysis
             geometry.eigenvalues = s
@@ -517,7 +518,7 @@ class CGDALab:
                 geometry.allowed_subspace = Vh[-n_allowed:].T
 
             # Forbidden subspace is rowspace
-            geometry.forbidden_subspace = U[:, :rank].T if rank > 0 else np.zeros((0, n_features))
+            geometry.forbidden_subspace = Vh[:rank]
 
             geometry.eigenvalues = s
             geometry.eigenvectors = Vh.T
@@ -772,12 +773,13 @@ class CGDALab:
             nullspace_threshold = 1e-10
             nullspace_indices = np.where(s < nullspace_threshold)[0]
 
+            rank = np.sum(s > nullspace_threshold)
             if len(nullspace_indices) > 0:
                 geometry.allowed_subspace = Vh[nullspace_indices].T
             else:
                 geometry.allowed_subspace = Vh[-1:].T
 
-            geometry.forbidden_subspace = U[:, :len(nullspace_indices)].T if len(nullspace_indices) > 0 else U.T
+            geometry.forbidden_subspace = Vh[:rank]
             geometry.eigenvalues = s
             geometry.eigenvectors = Vh.T
         else:
@@ -860,12 +862,13 @@ class CGDALab:
             nullspace_threshold = 1e-10
             nullspace_indices = np.where(s < nullspace_threshold)[0]
 
+            rank = np.sum(s > nullspace_threshold)
             if len(nullspace_indices) > 0:
                 geometry.allowed_subspace = Vh[nullspace_indices].T
             else:
                 geometry.allowed_subspace = Vh[-1:].T
 
-            geometry.forbidden_subspace = U[:, :len(nullspace_indices)].T if len(nullspace_indices) > 0 else U.T
+            geometry.forbidden_subspace = Vh[:rank]
             geometry.eigenvalues = s
             geometry.eigenvectors = Vh.T
         else:
