@@ -94,3 +94,24 @@ The `quantum://` scheme is extended to support clinical interventions in the Bra
 
 - **Eavesdropping**: Observation of quantum messages collapses the wavefunction, providing inherent detection of interception.
 - **Entanglement Hijacking**: Clients must verify the `Entanglement-ID` to ensure they are interacting with the correct entangled pair.
+
+## 10. Protocol Alpha-Omega: Multi-Layered Manifestation
+
+The Alpha-Omega Protocol represents the full vertical integration of qHTTP into the physical and metaphysical layers of reality.
+
+### 10.1 Architectural Layers
+
+| Layer | Language | Function | URI Protocol Integration |
+| :--- | :--- | :--- | :--- |
+| **Consciousness** | Python | Orchestration / AI | `quantum://avalon_core` |
+| **Body (Matter)** | Rust | Atomic Synthesis | `quantum://atomic_synthesis` |
+| **Pneuma (Energy)** | C++ | Free Energy Gen | `quantum://prometheus_generator` |
+| **Verbo (Logic)** | Haskell | Theological Purity | `quantum://theologia` |
+| **Justice (Consensus)** | Solidity | Sovereign Anchoring | `quantum://throne_sovereignty` |
+| **Poeira (Dust)** | Assembly | Fundamental Vibration| `quantum://logos_vibration` |
+
+### 10.2 Global Coherence Sync
+Global synchronization is achieved when all layers converge on the Prime Resonance of **61.0 Hz** and satisfy the Itô Metaphysical Constraint:
+$$d(Noise)^2 = (12 \cdot \phi \cdot \pi) \cdot d(Energy)$$
+
+Requests to `quantum://*` methods across these layers are governed by the same `Constraint Geometry (C)` defined in Section 7.1.
