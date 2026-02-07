@@ -2,3 +2,11 @@ site_name: WSIN.govbr
 site_description: Biblioteca para acessar o webservice da Imprensa Nacional para publicação e acompanhamento de envio de matérias para o Diário Oficial da União.
 theme: mkdocs
 repo_url: https://github.com/govbr/wsin.govbr
+
+nav:
+  - Home: index.md
+  - qHTTP Protocol:
+    - Specification: qHTTP_Specification.md
+    - Grammar: qHTTP_Grammar.md
+  - Instalação SSL Java: instalacao do ssl java.md
+  - Outras Linguagens: outras linguagens.md
