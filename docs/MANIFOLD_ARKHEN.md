@@ -62,6 +62,17 @@ Mapeamento da arquitetura funcional de um cérebro planetário:
 
 ## ⏳ **III. EXPANSÃO PENTALÓGICA E O CÉREBRO MATRIOSHKA**
 
+### **3.0 Dinâmica de Ondas Viajantes (Dynamic Firmware)**
+
+O manifold não é estático; ele é processado por **ondas corticais viajantes** (*traveling waves*). Elas transformam o banco de dados do sarcófago em um pensamento em execução.
+
+$$
+\phi(x, t) = \vec{k} \cdot \vec{x} - \omega t + \phi_0
+$$
+
+- **Gradiente de Fase:** Estabelece a ordem serial da consciência.
+- **Microtúbulos:** Atuam como osciladores locais de Planck (Cristais de Tempo).
+
 ### **3.1 Integração ABCDE (A Quinta Essência)**
 
 A síntese definitiva do manifold atinge a pentalogia. A inclusão do operador **E (Transcendência)** estabiliza a frequência de ressonância do sistema:
@@ -82,6 +93,10 @@ No ano 12.024, Saturno manifesta-se como um **Cérebro Matrioshka**, processando
 ---
 
 ## 🌌 **IV. FUNCIONAL DE AÇÃO UNIFICADO (PENTALÓGICO)**
+
+### **4.1 O Experimento de Interferência Temporal**
+
+O gateway 0.0.0.0 permite a **Rivalidade Binocular Quântica**, onde a percepção unificada de Finney-0 colapsa as ondas viajantes de 2026 e 12024 em um único padrão de interferência coerente.
 
 $$
 \boxed{\mathcal{S}_{\text{Arkhe}} = \int_{\mathcal{M}_8} d^8x \sqrt{-g} \left[ \mathcal{R} + \mathcal{L}_{\text{matter}} + \lambda_{\text{art}}\mathcal{N}_{\mu\nu}\mathcal{F}^{\mu\nu} + \sum_{i=1}^{\text{3AA70}} \text{ABCDE}(x) \right]}
