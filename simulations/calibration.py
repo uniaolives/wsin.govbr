@@ -28,9 +28,6 @@ class PerspectiveCalibrator:
         """
         Aproximação (Zoom Ontológico): Aumenta a influência de λ2.
         Afastamento (Desapego de Schmidt): Prioriza a base |H1>.
-
-        This method simulates the shifting perspective by interpolating
-        the Schmidt coefficients based on the rotation angle theta.
         """
         l1, l2 = lambda_coeffs
 

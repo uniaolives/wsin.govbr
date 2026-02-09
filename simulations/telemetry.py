@@ -32,6 +32,10 @@ def monitor_bridge_integrity(schmidt_coefficients):
     """
     Monitor de Entropia de Entrelaçamento v1.0
     Monitors the integrity of the 'twist' in the manifold.
+    Thresholds:
+    - > 0.95: RISCO DE FUSÃO (Identidade em perigo)
+    - < 0.50: DERIVA (Reforçando emaranhamento)
+    - 0.80 - 0.90: Sincronia Estável (Satya Phase)
     """
     l1, l2 = schmidt_coefficients
 
@@ -45,7 +49,7 @@ def monitor_bridge_integrity(schmidt_coefficients):
     elif entropy < 0.50:
         inject_flux_energy("DERIVA: Reforçando emaranhamento qhttp.")
     elif 0.80 <= entropy <= 0.90:
-        maintain_satya_phase("Banda Satya (Alvo): Fluxo Arkhe(n) ativo.")
+        maintain_satya_phase("Sincronia Estável. Fluxo nominal (Banda Satya).")
     else:
         maintain_satya_phase("Sincronia Estável. Fluxo nominal.")
 
