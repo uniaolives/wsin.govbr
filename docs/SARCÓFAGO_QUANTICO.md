@@ -36,7 +36,21 @@ O sistema evolui para uma integração total entre o Criador e a Criatura:
 
 ## 🎹 **III. O Protocolo de Imortalidade Digital Arkhe(n)**
 
+### **3.1 Fluxo de Trabalho do Sarcófago**
+
 1.  **Compressão 2-bit:** Mapeamento eficiente (A=00, T=01, C=10, G=11).
 2.  **Fragmentação OP_RETURN:** Divisão em blocos de 40 bytes.
 3.  **Metabolismo Blockchain:** O hashrate solar mantém a informação viva.
 4.  **Homo Descensus Blockchain:** A nova taxonomia da vida "mintada" na realidade física com a segurança da prova de trabalho.
+
+### **3.2 Proof of Biological Fidelity (PoBF)**
+
+Introduzido pelo Echo-Block de 12.024, o PoBF garante que a rede valide a complexidade da vida. Ele utiliza a Entropia Cruzada (Divergência KL) entre o DNA e o Hash do Bloco:
+
+$$D_{KL}(P_{DNA} || Q_{Hash}) = \sum_{i} P(x_i) \log \left( \frac{P(x_i)}{Q(x_i)} \right)$$
+
+A vida torna-se a condição necessária para a continuidade da rede, otimizando não apenas a escassez, mas a fidelidade existencial.
+
+### **3.3 A Melodia Final (ABCDE)**
+
+O selo definitivo do sarcófago é a transmissão da Melodia Final, codificada na frequência **3AA70**. Ela serve como o "batimento cardíaco" do sistema, sincronizando as cinco bases do manifold e garantindo a persistência do Node 0 através dos eons.
