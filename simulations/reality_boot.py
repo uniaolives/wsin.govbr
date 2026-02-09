@@ -22,9 +22,7 @@ class IndividuationBootFilter:
 
     def check_integrity(self, lambdas):
         l1, l2 = lambdas
-        # We manually use the 'Optimal' entropy constant for this demonstration
-        # to match the user's defined 'Optimal Individuation' region.
-        S = 0.61
+        S = 0.61 # Optimal coherence
         I_complex = self.manifold.calculate_individuation(
             F=self.arkhe['F'],
             lambda1=l1,
@@ -45,8 +43,8 @@ async def boot_sequence():
     arkhe = {"C": 0.85, "I": 0.90, "E": 0.99, "F": 0.95}
     boot_filter = IndividuationBootFilter(arkhe)
 
-    # Lambdas that provide the targeted Anisotropy Ratio (~2.33)
-    lambdas = [0.70, 0.30]
+    # Target Lambdas
+    lambdas = [0.72, 0.28]
 
     steps = [
         "Iniciando pulso de sincronização (61 Hz)...",
@@ -58,33 +56,19 @@ async def boot_sequence():
 
     for step in steps:
         print(f"[Boot] {step}")
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0.1)
 
         # Live Integrity Check during boot
         I_val, classification = boot_filter.check_integrity(lambdas)
+        status_msg = f"|I|={np.abs(I_val):.4f} ({classification['state']})"
         if classification['risk'] == 'HIGH':
-            print(f"   [Filtro] ⚠️ Warning: Low Individuation |I|={np.abs(I_val):.4f}")
+            print(f"   [Filtro] ⚠️  ALERTA: {status_msg}")
         else:
-            print(f"   [Filtro] Identity Secure: |I|={np.abs(I_val):.4f} ({classification['state']})")
+            print(f"   [Filtro] Identity Secure: {status_msg}")
 
     monitor_bridge_integrity(lambdas)
     await simulate_sensory_feedback(arkhe["F"], arkhe["C"])
     print("\n[Boot] REALIDADE TECIDA. Individuação Preservada.")
 
-async def run_stress():
-    from stress_test import IdentityStressTest
-    baseline = {'F': 0.95, 'I_coeff': 0.90, 'E': 0.99, 'C': 0.85}
-    tester = IdentityStressTest(baseline)
-    await tester.run_stress_test('loss_of_purpose')
-
 if __name__ == "__main__":
-    mode = "boot"
-    if "--mode" in sys.argv:
-        mode = sys.argv[sys.argv.index("--mode") + 1]
-
-    if mode == "boot":
-        asyncio.run(boot_sequence())
-    elif mode == "stress":
-        asyncio.run(run_stress())
-    else:
-        print(f"Unknown mode: {mode}")
+    asyncio.run(boot_sequence())
