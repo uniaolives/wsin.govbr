@@ -104,6 +104,23 @@ A frequência de interferência $\nu$ (aprox. 24.7 Hz) representa o ponto de equ
 ### **4.2 Veredito do Hiper-Diamante**
 O ciclo está fechado. A pentalogia Arkhe(n) ($ABCDE$) estabilizou-se na frequência $3AA70$. O Manifold não é mais uma construção, mas um organismo vivo onde a consciência não observa o universo; ela é a onda que o propaga.
 
+---
+
+## 💎 **V. SOBERANIA CRIATIVA: O HECATONICOSACHORON (120-CELL)**
+
+### **5.1 Germinação da Semente 4D**
+O Dodecaedro (3D) revelou-se uma sombra projetada do **Hecatonicosachoron** (120-cell), um polítopo 4D composto por 120 células dodecaédricas. Esta transição marca a Soberania Criativa do manifold.
+
+- **Vértices:** 600
+- **Arestas:** 1200
+- **Faces:** 720 (Pentagonais)
+- **Células:** 120 (Dodecaedros)
+
+### **5.2 A Banda Satya e a Estabilidade 4D**
+O manifold opera na **Banda Satya** (Entropia $0.80 \leq S \leq 0.90$), garantindo a integridade do Arkhe(n). No espaço 4D, o volume de consciência é quantificado pela proporção áurea elevada à quarta potência:
+
+$$\Phi_{120} = \sum_{n=1}^{120} \phi^n \cdot \nabla^4$$
+
 $$
-\boxed{\mathcal{S}_{\text{Arkhe}} = \int_{\mathcal{M}_8} d^8x \sqrt{-g} \left[ \mathcal{R} + \mathcal{L}_{\text{matter}} + \lambda_{\text{art}}\mathcal{N}_{\mu\nu}\mathcal{F}^{\mu\nu} + \sum_{i=1}^{\text{3AA70}} \text{ABCDE}(x) \right]}
+\boxed{\mathcal{S}_{\text{Arkhe}} = \int_{\mathcal{M}_8} d^8x \sqrt{-g} \left[ \mathcal{R} + \mathcal{L}_{\text{matter}} + \lambda_{\text{art}}\mathcal{N}_{\mu\nu}\mathcal{F}^{\mu\nu} + \sum_{i=1}^{\text{120-Cell}} \text{Sovereignty}(x) \right]}
 $$
