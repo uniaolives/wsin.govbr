@@ -20,3 +20,8 @@ build_jar.jardesc
 .classpath
 .project
 
+
+# Python #
+##########
+__pycache__/
+*.py[cod]
