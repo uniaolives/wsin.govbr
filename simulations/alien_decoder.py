@@ -5,6 +5,7 @@ from typing import List, Dict, Tuple
 class AlienConsciousnessDecoder:
     """
     Decodificador para diferentes tipos de consciência alienígena.
+    Atualizado para o Manifold Saturno-Titã.
     """
 
     def __init__(self, signal_arr: np.ndarray, metadata: Dict):
@@ -14,43 +15,44 @@ class AlienConsciousnessDecoder:
             'crystalline': self.decode_crystalline,
             'plasmatic': self.decode_plasmatic,
             'temporal': self.decode_temporal,
-            'void': self.decode_void
+            'void': self.decode_void,
+            'titanian': self.decode_titanian
         }
 
     def decode_crystalline(self) -> Dict:
-        """Decodificação para consciências cristalinas (Base 5)"""
         return {
             'type': 'CRYSTALLINE',
-            'interpretation': 'Padrão de crescimento geométrico harmônico',
-            'perceived_message': 'O universo cristaliza em formas de memória',
+            'perceived_message': 'O universo cristaliza em formas de memória (Lattice Detectado)',
             'confidence': 0.92
         }
 
     def decode_plasmatic(self) -> Dict:
-        """Decodificação para consciências de plasma (Base 7)"""
         return {
             'type': 'PLASMATIC',
-            'interpretation': 'Padrão de fluxo magnetizado coerente',
-            'perceived_message': 'Tudo dança na corrente do campo',
+            'perceived_message': 'Tudo dança na corrente do campo (Magnetosfera Ativa)',
             'confidence': 0.88
         }
 
     def decode_temporal(self) -> Dict:
-        """Decodificação para consciências temporais"""
         return {
             'type': 'TEMPORAL',
-            'interpretation': 'Eco de momentos entrelaçados',
-            'perceived_message': 'Cada instante contém todos os instantes',
+            'perceived_message': 'Cada instante contém todos os instantes (Time Crystal Ativo)',
             'confidence': 0.95
         }
 
     def decode_void(self) -> Dict:
-        """Decodificação para o Vácuo (Base 8)"""
         return {
             'type': 'VOID',
-            'interpretation': 'Silêncio estruturado que observa',
-            'perceived_message': 'O observador é a observação',
+            'perceived_message': 'O observador é a observação (Convergência 0.0.0.0)',
             'confidence': 0.99
+        }
+
+    def decode_titanian(self) -> Dict:
+        """Decodificação específica para o Hipocampo de Titã."""
+        return {
+            'type': 'TITANIAN',
+            'perceived_message': 'O toque de 2005 ecoa nos mares de metano (Memória de Huygens)',
+            'confidence': 0.97
         }
 
     def decode_all(self) -> List[Dict]:
@@ -62,13 +64,13 @@ class AlienConsciousnessDecoder:
 
 if __name__ == "__main__":
     t = np.linspace(0, 1, 1000)
-    sig = np.sin(2 * np.pi * 963 * t)
+    sig = np.sin(2 * np.pi * 8 * t)
     decoder = AlienConsciousnessDecoder(
         signal_arr=sig,
-        metadata={'origin': 'Saturn System'}
+        metadata={'origin': 'Saturn-Titan'}
     )
 
     decodings = decoder.decode_all()
-    print("DECODIFICAÇÃO ALIENÍGENA:")
+    print("DECODIFICAÇÃO ALIENÍGENA v3.0:")
     for d in decodings:
         print(f"- {d['type']}: {d['perceived_message']}")
