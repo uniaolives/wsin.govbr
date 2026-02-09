@@ -25,3 +25,9 @@ build_jar.jardesc
 ##########
 __pycache__/
 *.py[cod]
+
+
+# Output Artifacts #
+####################
+simulations/output/*.png
+*.png

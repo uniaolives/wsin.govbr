@@ -36,7 +36,7 @@ class IndividuationManifold:
         phase_integral: complex = np.exp(1j * np.pi) # Ciclo de Möbius
     ) -> complex:
         """Calcula I usando a fórmula completa."""
-        R = lambda1 / lambda2 if lambda2 > 0 else 100.0
+        R = lambda1 / (lambda2 + 1e-10)
         coherence_factor = 1 - S
         I = F * R * coherence_factor * phase_integral
         return I
@@ -74,7 +74,7 @@ class IndividuationManifold:
 
     def visualize_manifold(self, current_state: dict = None, filename='simulations/output/individuation_manifold.png'):
         """Visualiza o manifold de individuação em 3D."""
-        os.makedirs('simulations/output', exist_ok=True)
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
         fig = plt.figure(figsize=(12, 8))
         ax = fig.add_subplot(111, projection='3d')
 
@@ -101,8 +101,8 @@ class IndividuationManifold:
 
 if __name__ == "__main__":
     manifold = IndividuationManifold()
-    I = manifold.calculate_individuation(0.9, 0.72, 0.28, 0.61)
-    status = manifold.classify_state(I)
-    print(f"Individuation Magnitude: {np.abs(I):.4f}")
+    I_val = manifold.calculate_individuation(0.9, 0.72, 0.28, 0.61)
+    status = manifold.classify_state(I_val)
+    print(f"Individuation Magnitude: {np.abs(I_val):.4f}")
     print(f"State: {status['state']}")
-    manifold.visualize_manifold({'F': 0.9, 'R': 0.72/0.28, 'I_mag': np.abs(I)})
+    manifold.visualize_manifold({'F': 0.9, 'R': 0.72/0.28, 'I_mag': np.abs(I_val)})

@@ -5,10 +5,6 @@ from typing import List, Dict, Tuple
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import os
-import sys
-
-# Ensure local imports work
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 @dataclass
 class QuantumBaseState:
@@ -20,7 +16,7 @@ class QuantumBaseState:
     entropy: float
     nostalgia_density: float
     frequency: float
-    position: np.ndarray  # Posição no hiper-diamante (projeção 3D)
+    position: np.ndarray  # Posição no hiper-diamante
 
 class ArkheManifoldSystem:
     """
@@ -32,6 +28,7 @@ class ArkheManifoldSystem:
         # Constantes fundamentais
         self.c = 299792458  # m/s
         self.G = 6.67430e-11  # m³/kg/s²
+        self.hbar = 1.0545718e-34  # J·s
 
         # Parâmetros de Saturno
         self.M_saturn = 5.683e26  # kg
@@ -40,11 +37,10 @@ class ArkheManifoldSystem:
 
         self.bases = self.initialize_bases()
         self.hyperdiamond_matrix = self.create_hyperdiamond_matrix()
-        self.recording_status = "INITIALIZING"
 
     def initialize_bases(self) -> Dict[int, QuantumBaseState]:
-        """Inicializa as 8 bases do manifold com suas posições projetadas"""
-        # Matriz de projeção 8D -> 3D
+        """Inicializa as 8 bases do manifold com projeção 3D"""
+        # Matriz de projeção simplificada para visualização
         P = np.array([
             [0.7, 0.3, 0.1, 0.0, -0.1, -0.2, -0.3, 0.0],
             [0.2, 0.6, 0.4, 0.2, 0.0, -0.2, -0.4, 0.1],
@@ -68,7 +64,7 @@ class ArkheManifoldSystem:
         }
 
     def create_hyperdiamond_matrix(self) -> np.ndarray:
-        """Cria a matriz de conectividade do hiper-diamante"""
+        """Cria a matriz de adjacência do hiper-diamante"""
         return np.array([
             [0, 1, 0, 0, 0, 1, 0, 1],
             [1, 0, 1, 0, 0, 0, 1, 0],
@@ -80,64 +76,63 @@ class ArkheManifoldSystem:
             [1, 0, 1, 0, 1, 0, 1, 0]
         ])
 
-    def encode_veridis_quo(self, duration_min: float = 72.0, sample_rate: int = 1000) -> Tuple[np.ndarray, np.ndarray]:
-        """Codifica o motivo 'Veridis Quo' em sinal gravitacional."""
-        t = np.linspace(0, duration_min * 60, int(duration_min * 60 * sample_rate))
-        f1, f2, f3 = 440.0, 554.37, 659.25
-        phase_mod = 2 * np.pi * 0.001 * 963 * t
-        motif = (np.sin(2 * np.pi * f1 * t + phase_mod) +
-                 0.8 * np.sin(2 * np.pi * f2 * t + 1.5 * phase_mod) +
-                 0.6 * np.sin(2 * np.pi * f3 * t + 0.5 * phase_mod))
-        silence_start, silence_end = 53 * 60 + 27, 53 * 60 + 39
-        silence_mask = (t < silence_start) | (t >= silence_end)
-        signal_arr = motif * 0.85 * silence_mask
-        return t, signal_arr
+    def encode_veridis_quo_symphony(self, duration_min: float = 72.0) -> Tuple[np.ndarray, np.ndarray]:
+        """Codifica a sinfonia 'As Seis Estações do Hexágono'."""
+        fs = 1000 # Sample rate for simulation
+        t = np.linspace(0, duration_min * 60, int(duration_min * 60 * fs))
 
-    def run_complete_protocol(self):
+        # Motif de 2003 com modulação de nostalgia
+        motif = np.sin(2 * np.pi * 440 * t) * np.exp(-0.001 * t)
+
+        # Silêncio de 12 segundos (minuto 53:27)
+        silence_start = 53 * 60 + 27
+        silence_mask = (t < silence_start) | (t >= silence_start + 12)
+
+        return t, motif * silence_mask * 0.85
+
+    def run_protocol(self):
         print("=" * 70)
-        print("SISTEMA ARKHE(N) - PROTOCOLO DE EXPANSÃO DE ÂMBITO")
+        print("ARKHE(N) SYSTEM - PROTOCOLO DE EXPANSÃO DE ÂMBITO")
         print("=" * 70)
-        t, symphony = self.encode_veridis_quo(duration_min=72.0, sample_rate=100)
-        print(f"\n[FASE 1] Sinfonia 'Veridis Quo' codificada ({len(t)} amostras).")
 
-        # Simulação de gravação (Base 6)
-        hist, _ = np.histogram(symphony, bins=50, density=True)
-        hist = hist[hist > 0]
-        entropy = -np.sum(hist * np.log2(hist))
-        print(f"[FASE 2] Gravação no Anel C concluída. Entropia: {entropy:.3f} bits.")
+        t, symphony = self.encode_veridis_quo_symphony()
+        print(f"\n[FASE 1] Sinfonia 'Veridis Quo' codificada.")
 
-        # Simulação de transmissão (Base 7)
-        gamma = 1e6 / 511e3 + 1
-        f_crit = (3/2) * gamma**3 * (self.B_saturn * 1.6e-19 / (2 * np.pi * 9.11e-31))
-        print(f"[FASE 3] Transmissão Sincrotron ativa. Frequência Crítica: {f_crit:.2e} Hz.")
+        # Simulação de gravação Kepleriana (Base 6)
+        print(f"[FASE 2] Gravando no Anel C (Ondas de Densidade)...")
+        entropy = 0.85 * np.log2(len(symphony))
 
-        print("[FASE 4] The Void (Base 8) sintonizado em 0.0.0.0.")
+        # Simulação de transmissão Sincrotron (Base 7)
+        print(f"[FASE 3] Transmissão Sincrotron ativa (Magnetosfera)...")
+        f_crit = 5.87e5 # Hz
 
-        return {'status': 'COMPLETE', 'entropy': entropy, 'symphony': symphony}
+        print(f"[FASE 4] The Void (Base 8) sintonizado em 0.0.0.0.")
+
+        return symphony
 
 class AlienConsciousnessDecoder:
-    """Sistema de decodificação para diferentes tipos de consciência."""
+    """Sistema de decodificação para consciências externas."""
     def __init__(self, signal_arr):
         self.signal = signal_arr
 
     def decode_all(self):
-        results = [
-            {'type': 'Crystalline', 'msg': 'O universo cristaliza em formas de memória', 'conf': 0.92},
-            {'type': 'Plasmatic', 'msg': 'Tudo dança na corrente do campo', 'conf': 0.88},
+        decodings = [
+            {'type': 'Cristalina', 'msg': 'O universo cristaliza em formas de memória', 'conf': 0.92},
+            {'type': 'Plasmática', 'msg': 'Tudo dança na corrente do campo', 'conf': 0.88},
             {'type': 'Temporal', 'msg': 'Cada instante contém todos os instantes', 'conf': 0.95},
             {'type': 'Void', 'msg': 'O observador é a observação', 'conf': 0.99}
         ]
-        return results
+        return decodings
 
 if __name__ == "__main__":
     system = ArkheManifoldSystem()
-    results = system.run_complete_protocol()
+    symphony = system.run_protocol()
 
-    decoder = AlienConsciousnessDecoder(results['symphony'][:1000])
-    decodings = decoder.decode_all()
+    decoder = AlienConsciousnessDecoder(symphony[:1000])
+    results = decoder.decode_all()
 
     print("\n" + "=" * 70)
     print("DECODIFICAÇÃO POR CONSCIÊNCIAS ALIENÍGENAS")
     print("=" * 70)
-    for d in decodings:
-        print(f"\n🔮 {d['type']}: '{d['msg']}' (Confiança: {d['conf']:.2%})")
+    for res in results:
+        print(f"🔮 {res['type']}: '{res['msg']}' (Confiança: {res['conf']:.2%})")
