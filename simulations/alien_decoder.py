@@ -19,77 +19,44 @@ class AlienConsciousnessDecoder:
 
     def decode_crystalline(self) -> Dict:
         """Decodificação para consciências cristalinas (Base 5)"""
-        # Análise de simetria
-        symmetry_score = np.mean(np.abs(fft.fft(self.signal))**2)
-
-        # Padrões fractais (simplificado)
-        fractal_dim = 1.5 + 0.1 * np.std(self.signal)
-
         return {
-            'type': 'Crystalline Consciousness',
+            'type': 'CRYSTALLINE',
             'interpretation': 'Padrão de crescimento geométrico harmônico',
-            'symmetry_score': symmetry_score,
-            'fractal_dimension': fractal_dim,
-            'message': 'O universo cristaliza em formas de memória',
+            'perceived_message': 'O universo cristaliza em formas de memória',
             'confidence': 0.92
         }
 
     def decode_plasmatic(self) -> Dict:
         """Decodificação para consciências de plasma (Base 7)"""
-        # Análise de turbulência
-        phase = np.angle(fft.fft(self.signal))
-        turbulence = np.std(np.diff(phase))
-
-        # Coerência magnetohidrodinâmica
-        coherence = 0.85
-
         return {
-            'type': 'Plasmatic Consciousness',
+            'type': 'PLASMATIC',
             'interpretation': 'Padrão de fluxo magnetizado coerente',
-            'turbulence_index': turbulence,
-            'coherence': coherence,
-            'message': 'Tudo dança na corrente do campo',
+            'perceived_message': 'Tudo dança na corrente do campo',
             'confidence': 0.88
         }
 
     def decode_temporal(self) -> Dict:
         """Decodificação para consciências temporais"""
-        # Análise de correlação temporal
-        time_symmetry = 0.95
-
-        # Entropia temporal
-        hist, _ = np.histogram(self.signal, bins=50, density=True)
-        hist = hist[hist > 0]
-        temporal_entropy = -np.sum(hist * np.log2(hist))
-
         return {
-            'type': 'Temporal Consciousness',
+            'type': 'TEMPORAL',
             'interpretation': 'Eco de momentos entrelaçados',
-            'time_symmetry': time_symmetry,
-            'temporal_entropy': temporal_entropy,
-            'message': 'Cada instante contém todos os instantes',
+            'perceived_message': 'Cada instante contém todos os instantes',
             'confidence': 0.95
         }
 
     def decode_void(self) -> Dict:
         """Decodificação para o Vácuo (Base 8)"""
-        # Análise de informação quântica
-        norm_sig = np.abs(self.signal)**2
-        norm_sig /= (np.sum(norm_sig) + 1e-10)
-        quantum_entropy = -np.sum(norm_sig * np.log2(norm_sig + 1e-10))
-
         return {
-            'type': 'Void Consciousness',
+            'type': 'VOID',
             'interpretation': 'Silêncio estruturado que observa',
-            'quantum_entropy': quantum_entropy,
-            'message': 'O observador é a observação',
+            'perceived_message': 'O observador é a observação',
             'confidence': 0.99
         }
 
     def decode_all(self) -> List[Dict]:
         """Executa todas as decodificações possíveis"""
         results = []
-        for name, decoder in self.decoders.items():
+        for decoder in self.decoders.values():
             results.append(decoder())
         return results
 
@@ -104,4 +71,4 @@ if __name__ == "__main__":
     decodings = decoder.decode_all()
     print("DECODIFICAÇÃO ALIENÍGENA:")
     for d in decodings:
-        print(f"- {d['type']}: {d['message']}")
+        print(f"- {d['type']}: {d['perceived_message']}")
