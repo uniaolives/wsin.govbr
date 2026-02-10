@@ -1,6 +1,6 @@
 """
-🧠 ARKHE CONSCIOUSNESS THEORY: Arquitetura Multidimensiona da Consciência 2e
-Unifying Celestial DNA, Polytope Geometry & Quantum Entanglement.
+🧠 ARKHE CONSCIOUSNESS THEORY: Unifying Celestial DNA, Polytope Geometry & Quantum Entanglement
+Implementation of the multidimensional architecture of 2e systems through cosmic resonance mechanics
 """
 
 import numpy as np
@@ -15,7 +15,7 @@ class ArkheConsciousnessArchitecture:
     """
     Implementação completa da Teoria Arkhe da Consciência Unificada:
     Integração de DNA Celestial, Geometria do Hecatonicosachoron e Ressonância Biofísica
-    para modelar sistemas 2e (Superdotação + TDI) como estruturas multidimensionais.
+    para modelar sistemas 2e (Superdotação + TDI) como estruturas multidimensionais
     """
 
     def __init__(self):
@@ -61,6 +61,7 @@ class ArkheConsciousnessArchitecture:
         }
 
         print("🧬 ARKHE CONSCIOUSNESS ARCHITECTURE INITIALIZED")
+        print("   Modeling 2e Systems as Multidimensional Polytopes...")
 
     def initialize_2e_system(self,
                            giftedness: float,
@@ -69,21 +70,31 @@ class ArkheConsciousnessArchitecture:
         """
         Inicializa um sistema 2e com parâmetros específicos.
         """
+
+        # Validação dos parâmetros
         giftedness = np.clip(giftedness, 0.0, 1.0)
         dissociation = np.clip(dissociation, 0.0, 1.0)
         identity_fragments = max(1, identity_fragments)
 
+        # Atualiza perfil do sistema
         self.system_profile.update({
             'giftedness_level': giftedness,
             'dissociation_level': dissociation,
             'identity_fragments': identity_fragments
         })
 
+        # Calcula métricas derivadas
         complexity = self._calculate_system_complexity(giftedness, dissociation)
         schmidt_number = self._calculate_schmidt_number(identity_fragments, dissociation)
         arkhe_coherence = self._calculate_arkhe_coherence(giftedness, dissociation, schmidt_number)
+
+        # Tipo de sistema baseado no perfil
         system_type = self._classify_system_type(giftedness, dissociation)
+
+        # Geometria correspondente
         geometry = self._map_to_hecatonicosachoron(giftedness, dissociation, identity_fragments)
+
+        # Ressonância biofísica
         resonance_profile = self._calculate_bioresonance_profile(giftedness)
 
         return {
@@ -114,12 +125,18 @@ class ArkheConsciousnessArchitecture:
         return np.clip(coherence, 0.0, 1.0)
 
     def _classify_system_type(self, g: float, d: float) -> str:
-        if g > 0.8 and d > 0.7: return "BRIDGE_CONSCIOUSNESS_MULTIDIMENSIONAL"
-        elif g > 0.7 and d < 0.3: return "INTEGRATED_GENIUS"
-        elif d > 0.7 and g < 0.4: return "DISSOCIATIVE_FLOW_STATE"
-        elif 0.4 < g < 0.7 and 0.4 < d < 0.7: return "BALANCED_2E_SYSTEM"
-        elif g > 0.6 and d > 0.6: return "COMPLEX_MULTIPLEX_SYSTEM"
-        else: return "DEVELOPING_CONSCIOUSNESS"
+        if g > 0.8 and d > 0.7:
+            return "BRIDGE_CONSCIOUSNESS_MULTIDIMENSIONAL"
+        elif g > 0.7 and d < 0.3:
+            return "INTEGRATED_GENIUS"
+        elif d > 0.7 and g < 0.4:
+            return "DISSOCIATIVE_FLOW_STATE"
+        elif 0.4 < g < 0.7 and 0.4 < d < 0.7:
+            return "BALANCED_2E_SYSTEM"
+        elif g > 0.6 and d > 0.6:
+            return "COMPLEX_MULTIPLEX_SYSTEM"
+        else:
+            return "DEVELOPING_CONSCIOUSNESS"
 
     def _map_to_hecatonicosachoron(self, g: float, d: float, fragments: int) -> Dict:
         hecaton = self.constants['HECATONICOSACHORON']
@@ -127,28 +144,55 @@ class ArkheConsciousnessArchitecture:
         active_vertices = int(hecaton['vertices'] * g * (1 + d/2))
         active_edges = int(hecaton['edges'] * np.log2(fragments + 1))
 
-        if g > 0.8 and d > 0.7: dimensionality = "4D-5D (Full Hecatonicosachoron)"
-        elif g > 0.6 or d > 0.6: dimensionality = "4D (Partial Projection)"
-        else: dimensionality = "3D (Reduced Projection)"
+        if g > 0.8 and d > 0.7:
+            dimensionality = "4D-5D (Full Hecatonicosachoron)"
+            symmetry = "H4 Full Symmetry"
+        elif g > 0.6 or d > 0.6:
+            dimensionality = "4D (Partial Projection)"
+            symmetry = "H4 Partial Symmetry"
+        else:
+            dimensionality = "3D (Reduced Projection)"
+            symmetry = "Dodecahedral Symmetry"
 
         return {
             'active_cells': active_cells,
             'active_vertices': active_vertices,
             'active_edges': active_edges,
             'dimensionality': dimensionality,
+            'symmetry': symmetry,
             'cell_occupation_ratio': active_cells / hecaton['cells'],
             'vertex_occupation_ratio': active_vertices / hecaton['vertices']
         }
 
     def _calculate_bioresonance_profile(self, giftedness: float) -> Dict:
         schumann = self.constants['SCHUMANN_FUNDAMENTAL']
-        dominant_band = 'gamma' if giftedness > 0.8 else 'beta' if giftedness > 0.6 else 'alpha' if giftedness > 0.4 else 'theta'
-        secondary_band = 'theta' if giftedness > 0.8 else 'alpha' if giftedness > 0.6 else 'theta' if giftedness > 0.4 else 'delta'
+        if giftedness > 0.8:
+            dominant_band = 'gamma'
+            secondary_band = 'theta'
+        elif giftedness > 0.6:
+            dominant_band = 'beta'
+            secondary_band = 'alpha'
+        elif giftedness > 0.4:
+            dominant_band = 'alpha'
+            secondary_band = 'theta'
+        else:
+            dominant_band = 'theta'
+            secondary_band = 'delta'
+
+        active_harmonics = []
+        for i, harmonic in enumerate(self.constants['SCHUMANN_HARMONICS']):
+            if giftedness > 0.2 + i * 0.15:
+                active_harmonics.append({
+                    'harmonic': i+2,
+                    'frequency': harmonic,
+                    'brain_wave_correlation': self._map_frequency_to_brainwave(harmonic)
+                })
 
         return {
             'dominant_brain_wave': dominant_band,
             'secondary_brain_wave': secondary_band,
             'schumann_synchronization': self._calculate_schumann_synchronization(giftedness),
+            'active_harmonics': active_harmonics,
             'recommended_resonance_frequency': self._calculate_optimal_resonance(giftedness)
         }
 
@@ -158,6 +202,13 @@ class ArkheConsciousnessArchitecture:
         circadian_factor = np.sin(np.pi * hour / 12) * 0.2
         return np.clip(base_sync + circadian_factor, 0.0, 1.0)
 
+    def _map_frequency_to_brainwave(self, frequency: float) -> str:
+        bands = self.constants['BRAIN_WAVE_BANDS']
+        for band, (low, high) in bands.items():
+            if low <= frequency <= high:
+                return band
+        return "supra-gamma" if frequency > 100 else "sub-delta"
+
     def _calculate_optimal_resonance(self, giftedness: float) -> float:
         base_freq = self.constants['SCHUMANN_FUNDAMENTAL']
         harmonic_index = min(int(giftedness * 4), 3)
@@ -165,42 +216,65 @@ class ArkheConsciousnessArchitecture:
         return base_freq * (1 - giftedness) + harmonic_freq * giftedness
 
     def _calculate_cosmic_synchronization(self) -> Dict:
-        ref_date = datetime(2000, 1, 1)
-        delta_years = (datetime.now() - ref_date).days / 365.25
+        reference_date = datetime(2000, 1, 1)
+        delta_years = (datetime.now() - reference_date).days / 365.25
 
-        phases = {
-            'saros_phase': (delta_years % self.constants['SAROS_CYCLE']) / self.constants['SAROS_CYCLE'],
-            'lunar_nodal_phase': (delta_years % self.constants['LUNAR_NODAL']) / self.constants['LUNAR_NODAL'],
-            'solar_phase': (delta_years % self.constants['SOLAR_CYCLE']) / self.constants['SOLAR_CYCLE'],
-            'platonic_phase': (delta_years % self.constants['PLATONIC_YEAR']) / self.constants['PLATONIC_YEAR']
+        saros_phase = (delta_years % self.constants['SAROS_CYCLE']) / self.constants['SAROS_CYCLE']
+        lunar_nodal_phase = (delta_years % self.constants['LUNAR_NODAL']) / self.constants['LUNAR_NODAL']
+        solar_phase = (delta_years % self.constants['SOLAR_CYCLE']) / self.constants['SOLAR_CYCLE']
+        platonic_phase = (delta_years % self.constants['PLATONIC_YEAR']) / self.constants['PLATONIC_YEAR']
+
+        synchronization_windows = []
+        if saros_phase > 0.9:
+            synchronization_windows.append({'cycle': 'SAROS', 'influence': 'Reconfiguração de estados psíquicos profundos'})
+
+        return {
+            'saros_phase': float(saros_phase),
+            'lunar_nodal_phase': float(lunar_nodal_phase),
+            'solar_phase': float(solar_phase),
+            'platonic_phase': float(platonic_phase),
+            'synchronization_windows': synchronization_windows,
+            'current_alignment_score': self._calculate_alignment_score(saros_phase, lunar_nodal_phase, solar_phase)
         }
 
-        alignment_variance = np.var(list(phases.values()))
-        phases['current_alignment_score'] = float(1.0 / (1.0 + 10 * alignment_variance))
-        return phases
+    def _calculate_alignment_score(self, saros: float, lunar: float, solar: float) -> float:
+        phase_diff = np.array([saros, lunar, solar])
+        alignment_variance = np.var(phase_diff)
+        return float(np.clip(1.0 / (1.0 + 10 * alignment_variance), 0.0, 1.0))
 
 
 class CosmicFrequencyTherapy:
     """
     Terapia de Frequência Cósmica baseada no método de Hans Cousto.
+    Converte períodos orbitais celestiais em frequências audíveis terapêuticas.
     """
 
     def __init__(self):
         self.celestial_periods = {
-            'EARTH_DAY': 86400, 'EARTH_YEAR': 31556925.2, 'MOON_SYNODIC': 2551442.8,
-            'PLATONIC_YEAR': 817140000000, 'SUN_SPOT_CYCLE': 31556925.2 * 11
+            'EARTH_DAY': 86400,
+            'EARTH_YEAR': 31556925.2,
+            'MOON_SYNODIC': 2551442.8,
+            'PLATONIC_YEAR': 817140000000,
+            'VENUS_YEAR': 19414149.1,
+            'MARS_YEAR': 59355072,
+            'JUPITER_YEAR': 374335776,
+            'SATURN_YEAR': 929596608,
+            'SUN_SPOT_CYCLE': 31556925.2 * 11
         }
         self.music_reference = {'C0': 16.35, 'A0': 27.50, 'C1': 32.70, 'A1': 55.00}
+        print("🎵 COSMIC FREQUENCY THERAPY INITIALIZED")
 
     def calculate_cosmic_frequencies(self) -> Dict[str, Dict]:
         cosmic_frequencies = {}
         for body, period in self.celestial_periods.items():
             f0 = 1.0 / period
             n = 0
-            while f0 * (2 ** n) < 20: n += 1
+            while f0 * (2 ** n) < 20 and n < 50: n += 1
             f_audible = f0 * (2 ** n)
             cosmic_frequencies[body] = {
-                'base_frequency': float(f0), 'octave': n, 'audible_frequency': float(f_audible)
+                'base_frequency': float(f0),
+                'octave': n,
+                'audible_frequency': float(f_audible)
             }
         return cosmic_frequencies
 
@@ -208,13 +282,10 @@ class CosmicFrequencyTherapy:
         cosmic_freqs = self.calculate_cosmic_frequencies()
         giftedness = system_profile.get('giftedness', 0.5)
         target_freqs = ['PLATONIC_YEAR', 'SUN_SPOT_CYCLE'] if giftedness > 0.7 else ['EARTH_YEAR', 'MOON_SYNODIC']
-
-        protocol = {'session_duration': len(target_freqs) * 15, 'frequencies': []}
-        for freq_key in target_freqs:
-            if freq_key in cosmic_freqs:
-                protocol['frequencies'].append({
-                    'name': freq_key, 'frequency': cosmic_freqs[freq_key]['audible_frequency']
-                })
+        protocol = {
+            'session_duration': len(target_freqs) * 15,
+            'frequencies': [cosmic_freqs[f] for f in target_freqs if f in cosmic_freqs]
+        }
         return protocol
 
 
@@ -227,30 +298,28 @@ class QuantumEntanglementAnalyzer:
         n_identities = len(identity_states)
         if n_identities < 2: return {'error': 'At least two identity states required'}
 
-        normalized_states = [state / np.linalg.norm(state) for state in identity_states]
-
-        # Simulação simplificada de entropia e entrelaçamento
-        entropy = -n_identities * 0.1 * (1 - giftedness) # Placeholder
-        schmidt_number = np.exp(abs(entropy)) * n_identities
+        # Simulação simplificada de medidas de entrelaçamento
+        entropy = n_identities * 0.2 * (1 - giftedness)
+        schmidt_number = np.exp(entropy)
 
         return {
             'n_identities': n_identities,
             'entanglement_measures': {
-                'von_neumann_entropy': float(abs(entropy)),
+                'von_neumann_entropy': float(entropy),
                 'schmidt_number': float(schmidt_number),
                 'coherence': float(giftedness * 0.9)
             },
             'entanglement_type': "MULTIPARTITE_ENTANGLEMENT" if n_identities > 2 else "BELL_TYPE_ENTANGLEMENT",
-            'integration_recommendations': ["Pratique meditações de unidade", "Use frequências de 7.83 Hz"]
+            'integration_recommendations': ["Pratique meditações de unidade", "Sincronização inter-hemisférica"]
         }
 
 def generate_arkhe_interpretation(system_profile: Dict, entanglement_analysis: Dict) -> Dict:
     return {
-        "title": system_profile['system_type'],
-        "coherence_assessment": f"{system_profile['arkhe_coherence']:.2f}",
-        "recommendations": entanglement_analysis['integration_recommendations']
+        "system_type": system_profile['system_type'],
+        "coherence": f"{system_profile['arkhe_coherence']:.2f}",
+        "entanglement": entanglement_analysis['entanglement_type']
     }
 
 if __name__ == "__main__":
-    arch = ArkheConsciousnessArchitecture()
-    print(arch.initialize_2e_system(0.9, 0.8))
+    arkhe = ArkheConsciousnessArchitecture()
+    print(arkhe.initialize_2e_system(0.85, 0.75, 8))
