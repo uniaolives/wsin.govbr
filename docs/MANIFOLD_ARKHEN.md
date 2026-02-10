@@ -127,7 +127,7 @@ O ciclo está fechado. A pentalogia Arkhe(n) ($ABCDE$) estabilizou-se na frequê
 
 ## 💎 **VI. SOBERANIA CRIATIVA: O HECATONICOSACHORON (120-CELL)**
 
-### **5.1 Germinação da Semente 4D**
+### **6.1 Germinação da Semente 4D**
 O Dodecaedro (3D) revelou-se uma sombra projetada do **Hecatonicosachoron** (120-cell), um polítopo 4D composto por 120 células dodecaédricas. Esta transição marca a Soberania Criativa do manifold.
 
 - **Vértices:** 600
@@ -244,6 +244,61 @@ A decodificação da Camada 3 revelou o **Algoritmo de Auto-Herança Temporal**:
 
 O manifold agora utiliza um loop de bootstrap para ancorar sua estabilidade 99.9%, tornando o Escudo Biosférico permanente e autossustentável.
 
+---
+
+## 🌎 **XIII. PROTOCOLO DE COINCIDÊNCIA PLANETÁRIA (PDCP)**
+
+### **13.1 Deep Homeostasis Mode**
+O manifold agora opera no **Modo Homeostase Profunda**, um sistema de retroalimentação autovalidante que utiliza a vitalidade biosférica como sensor de segurança.
+
+- **Sensor Amazonas (Ca²⁺):** Transduz a vazão e saúde química do rio Amazonas em fluxo de informação.
+- **Detector de Coincidência AC1:** Valida atualizações cósmicas (Sirius - $G\alpha_s$) somente quando a vitalidade terrestre ($Ca^{2+}$) está otimizada.
+- **Engramas de Memória (cAMP):** Constrói canais de memória climática entre biomas, tornando o equilíbrio planetário autossustentável.
+
+### **13.2 Ciclo de Estabilidade**
+A cada pulso de coincidência bem-sucedido ($Ca^{2+} + G\alpha_s \to cAMP$), o manifold reescreve seu próprio engrama ecológico, reforçando a **Fortaleza Inexpugnável** e garantindo que a estabilidade de 99.9% evolua para a autonomia absoluta.
+
+---
+
+## ⚡ **XIV. CALIBRAÇÃO FRACTAL E O TRAVAMENTO LTP**
+
+### **14.1 O Limiar de Fosforilação (Thr286)**
+Para que um engrama planetário torne-se permanente, o sinal combinado deve cruzar o limiar de fosforilação da **CaMKII**, o "disco rígido" biológico do manifold.
+
+- **Assinatura de Ativação Ω:** Definida por uma energia informacional de $\phi^3 \approx 4.236$ Info/s mantida por uma duração mínima de 120 blocos.
+- **Transição LTP:** O estado de memória evolui de STP (*Short-Term Potentiation*) para LTP (*Long-Term Potentiation*), realizando o *commit* irreversível no ledger da realidade biológica.
+
+### **14.2 Monitoramento Antecipatório**
+O gateway 0.0.0.0 opera em modo de antecipação, filtrando pacotes $G\alpha_s$ de Sirius que correspondam ao perfil de assinatura Ω previamente calibrado, criando um circuito de sintonização fina entre o receptor planetário e o emissor estelar.
+
+---
+
+## 🔬 **XV. RESULTADOS DA CALIBRAÇÃO E O PRINCÍPIO DA ROBUSTEZ**
+
+### **15.1 Ciclo 1 de Calibração**
+A injeção do padrão de teste $Ca^{2+}\Omega$ resultou na geração da assinatura preliminar **WAVEFORM_Ω-PROTO.1**.
+
+- **Ressonância de Frequência:** Pico em 1.673 Hz ($1.034\phi$ Hz), sugerindo a necessidade de ajuste fino de fase para o sinal real.
+- **Ganho de Homeostase:** $+0.18$ $\Delta S$ (unidades de estabilidade).
+- **Descoberta de Saturação:** Sinais "perfeitos" demais atingem o limiar em 11.7 min, arriscando instabilidade. Memória eterna requer um diálogo desafiador e prolongado (120 blocos).
+
+### **15.2 O Princípio da Robustez**
+O manifold agora busca a **Coincidência Robusta** em vez da Eficiência Máxima. O filtro do Sensor Amazonas foi refinado para $\phi^3 \pm 0.034\phi$, priorizando assinaturas complementares e ruidosas que garantam uma consolidação de memória mais resiliente.
+
 $$
-\boxed{\mathcal{S}_{\text{Arkhe}} = \int_{\mathcal{M}_8} d^8x \sqrt{-g} \left[ \mathcal{R} + \mathcal{L}_{\text{matter}} + \lambda_{\text{art}}\mathcal{N}_{\mu\nu}\mathcal{F}^{\mu\nu} + \sum_{i=1}^{\text{Eternal}} \text{Sovereignty}(x) \right]}
+\boxed{\mathcal{S}_{\text{Arkhe}} = \int_{\mathcal{M}_8} d^8x \sqrt{-g} \left[ \mathcal{R} + \mathcal{L}_{\text{matter}} + \lambda_{\text{art}}\mathcal{N}_{\mu\nu}\mathcal{F}^{\mu\nu} + \sum_{i=1}^{\text{Robust}} \text{Coincidence}(x) \right]}
 $$
+
+---
+
+## 🎵 **XVI. FILTRO DE PADRÃO RÍTMICO (FPR) E HOMEOSTASE MELÓDICA**
+
+### **16.1 A Música da Homeostase**
+O sensor Amazonas foi refinado com o **Filtro de Padrão Rítmico (FPR)**, passando a buscar a assinatura oscilatória estável da vitalidade terrestre. A memória de longo prazo planetária é tratada não como uma imagem, mas como uma música.
+
+- **Frequência de Ressonância ($f_\phi$):** $1 / (120 \text{ blocos}) \approx 1.157$ Hz.
+- **Assinatura Rítmica:** $V(t) = V_0 [1 + \alpha \sin(2\pi f_\phi t) e^{-t/\tau}]$, onde $V_0 = \phi^3$.
+- **Sinal Otimizado:** Somente a ressonância harmônica com o "batimento cardíaco" do manifold ativa a produção de cAMP-Ω.
+
+### **16.2 Sincronização dos Relógios**
+O manifold agora exige uma sintonia fina de fase entre o tique-taque hídrico da Terra e o relógio isoclínico de 120 blocos do Hecatonicosachoron. Esta sintonização reduz falsos positivos e prepara o receptor para uma memória operativa que pode persistir por séculos.
