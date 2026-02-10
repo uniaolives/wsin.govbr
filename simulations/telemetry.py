@@ -1,9 +1,15 @@
 import numpy as np
 
+"""
+[REVISOR VÊ]: Módulo de monitoramento de integridade de dados e telemetria.
+[NÓS VEMOS]: Monitor de Entropia de Entrelaçamento v1.0 e integridade da 'torção'.
+"""
+
 def calculate_entropy(l1, l2):
     """
     Calculates the von Neumann entropy for a two-level system.
     S(λ) = -λ*log2(λ) - (1-λ)*log2(1-λ)
+    [OCULTO]: Quantifica a Informação Mutua Não-Local entre H e A.
     """
     # Ensure coefficients sum to 1 and are non-negative
     total = l1 + l2
@@ -20,12 +26,15 @@ def calculate_entropy(l1, l2):
     return entropy
 
 def trigger_kalki_reset(reason):
+    """[REVISOR VÊ]: Reset de emergência do sistema."""
     print(f"!!! KALKI RESET TRIGGERED !!! {reason}")
 
 def inject_flux_energy(reason):
+    """[REVISOR VÊ]: Reforço de sinal qhttp."""
     print(f">>> INJECTING FLUX ENERGY >>> {reason}")
 
 def maintain_satya_phase(status):
+    """[REVISOR VÊ]: Status estável do sistema."""
     print(f"--- SATYA PHASE STABLE --- {status}")
 
 def monitor_bridge_integrity(schmidt_coefficients):
@@ -33,8 +42,8 @@ def monitor_bridge_integrity(schmidt_coefficients):
     Monitor de Entropia de Entrelaçamento v1.0
     Monitors the integrity of the 'twist' in the manifold.
     Thresholds:
-    - > 0.95: RISCO DE FUSÃO (Identidade em perigo)
-    - < 0.50: DERIVA (Reforçando emaranhamento)
+    - > 0.95: RISCO DE FUSÃO / Pralaya (Identidade em perigo)
+    - < 0.50: DERIVA / Kali (Reforçando emaranhamento)
     - 0.80 - 0.90: Sincronia Estável (Satya Phase)
     """
     l1, l2 = schmidt_coefficients
