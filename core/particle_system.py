@@ -82,9 +82,13 @@ class BioParticleEngine:
 
     def update(self, dt: float, external_signals: Optional[List] = None):
         """
-        Atualiza o ecossistema completo
+        Atualiza o ecossistema completo com aprendizado.
         """
         self.state.time_step += 1
+
+        # 0. Guarda saúde anterior para calcular delta depois
+        for agent in self.agents.values():
+            agent.prev_health = agent.health
 
         # 1. Processa sinais externos
         if external_signals:
@@ -99,10 +103,13 @@ class BioParticleEngine:
         # 3. Atualiza cada agente
         self._update_agents(dt)
 
-        # 4. Processa interações e ligações
-        self._process_interactions()
+        # 4. Processa interações INTELIGENTES
+        self._process_smart_interactions()
 
-        # 5. Atualiza métricas do ecossistema
+        # 5. Fase de Aprendizado (Feedback Metabólico)
+        self._metabolic_feedback()
+
+        # 6. Atualiza métricas do ecossistema
         self._update_ecosystem_metrics()
 
     def _update_morphogenetic_field(self):
@@ -159,30 +166,80 @@ class BioParticleEngine:
         for aid in dead_ids:
             del self.agents[aid]
 
-    def _process_interactions(self):
-        """Processa interações e forma ligações entre agentes"""
-        # Simplificado para performance
+    def _process_smart_interactions(self):
+        """
+        Processa ligações usando o ConstraintLearner (Cérebro).
+        """
         agent_list = list(self.agents.values())
-        if not agent_list: return
 
-        for i in range(len(agent_list)):
-            agent = agent_list[i]
-            if agent.health <= 0 or len(agent.neighbors) >= 6:
-                continue
+        # Custo metabólico de manter uma ligação
+        CONNECTION_COST = 0.0005
 
-            # Checa apenas alguns vizinhos próximos na lista (simplificação)
-            for j in range(i + 1, min(i + 20, len(agent_list))):
-                other = agent_list[j]
-                if other.health <= 0 or len(other.neighbors) >= 6:
+        for i, agent in enumerate(agent_list):
+            if agent.health <= 0: continue
+
+            # A. Processa ligações existentes (Manter ou Cortar?)
+            for neighbor_id in list(agent.neighbors):
+                neighbor = self.agents.get(neighbor_id)
+                if not neighbor or neighbor.health <= 0:
+                    if neighbor_id in agent.neighbors:
+                        agent.neighbors.remove(neighbor_id)
                     continue
 
-                dist = np.linalg.norm(other.position - agent.position)
-                if dist < 3.0:
-                    compatibility = 1.0 - np.abs(agent.genome.C - other.genome.C)
-                    if compatibility > 0.8 and random.random() < 0.1:
-                        if agent.id not in other.neighbors:
+                # Consome energia para manter conexão
+                agent.health -= CONNECTION_COST
+
+                # Troca de energia através da conexão (Simbiose vs Parasitismo)
+                compatibility = 1.0 - abs(agent.genome.C - neighbor.genome.C)
+
+                if compatibility > 0.5:
+                    # Simbiose: boost de energia
+                    boost = 0.002 * compatibility
+                    agent.health += boost
+                else:
+                    # Incompatibilidade: Dreno
+                    agent.health -= 0.001
+
+            # B. Tenta novas ligações (se tiver espaço)
+            if len(agent.neighbors) >= 6: continue
+
+            # Procura candidatos próximos (amostra para performance)
+            for j in range(i + 1, min(i + 20, len(agent_list))):
+                other = agent_list[j]
+                if other.health <= 0 or len(other.neighbors) >= 6: continue
+
+                dist = np.linalg.norm(agent.position - other.position)
+                if dist < 4.0:
+                    # --- AQUI ENTRA O CÉREBRO ---
+                    # Agente avalia o Parceiro
+                    prediction = agent.brain.evaluate_partner(other.genome)
+
+                    # Decisão: Só conecta se a previsão for positiva (com algum ruído para exploração)
+                    exploration_noise = (random.random() - 0.5) * 0.2
+
+                    if prediction + exploration_noise > 0.0:
+                        # Conecta!
+                        if other.id not in agent.neighbors:
                             agent.neighbors.append(other.id)
                             other.neighbors.append(agent.id)
+
+    def _metabolic_feedback(self):
+        """
+        Ensina o cérebro com base na variação de saúde (Delta E).
+        """
+        for agent in self.agents.values():
+            if agent.health <= 0: continue
+
+            # Variação de energia neste frame
+            delta_e = agent.health - agent.prev_health
+
+            # Ensina o cérebro sobre TODOS os vizinhos atuais
+            if agent.neighbors:
+                share_delta = delta_e / len(agent.neighbors)
+                for nid in agent.neighbors:
+                    neighbor = self.agents.get(nid)
+                    if neighbor:
+                        agent.brain.learn(neighbor.genome, share_delta)
 
     def _update_ecosystem_metrics(self):
         """Atualiza métricas do ecossistema"""

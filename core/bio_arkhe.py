@@ -6,19 +6,12 @@ Implementação dos 5 Princípios Biológicos de Inteligência.
 import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Tuple, Dict, Optional, Any
+from .constraint_engine import ConstraintLearner, ArkheGenome
 
 # Constantes de Vida
 MAX_NEIGHBORS = 6  # Simetria Hexagonal (Packing eficiente)
 SIGNAL_DECAY = 0.95 # O sinal enfraquece com a distância
 ASSEMBLY_THRESHOLD = 0.8 # Afinidade necessária para ligação
-
-@dataclass
-class ArkheGenome:
-    """O DNA do Agente: Define sua personalidade e função."""
-    C: float  # Chemistry: Força de ligação (0.0 - 1.0)
-    I: float  # Information: Capacidade de processamento
-    E: float  # Energy: Mobilidade e influência
-    F: float  # Function: Frequência de sinalização
 
 class MorphogeneticField:
     """
@@ -100,11 +93,16 @@ class BioAgent:
         # Estado interno
         self.neighbors: List[int] = []
         self.health = 1.0
+        self.prev_health = 1.0
         self.age = 0
 
         # Memória de curto prazo
         self.memory: List[Tuple[np.ndarray, float]] = []
         self.memory_capacity = max(3, int(genome.I * 10))
+
+        # Motor de Descoberta de Restrições (Cérebro)
+        lr = 0.01 + (self.genome.I * 0.1)
+        self.brain = ConstraintLearner(learning_rate=lr)
 
     def sense_environment(self, field: MorphogeneticField) -> Dict[str, Any]:
         """Coleta informações do ambiente"""
