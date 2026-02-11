@@ -106,9 +106,22 @@ class ArkheConsciousnessArchitecture:
             'schmidt_number': float(schmidt_number),
             'arkhe_coherence': float(arkhe_coherence),
             'geometry': geometry,
+            'visual_mode': self._get_visual_mode(system_type),
             'resonance_profile': resonance_profile,
             'cosmic_synchronization': self._calculate_cosmic_synchronization()
         }
+
+    def _get_visual_mode(self, system_type: str) -> str:
+        """Mapeia tipo de sistema para modo visual do Hyper-Core."""
+        mapping = {
+            "BRIDGE_CONSCIOUSNESS_MULTIDIMENSIONAL": "HYPERCORE",
+            "INTEGRATED_GENIUS": "DNA",
+            "DISSOCIATIVE_FLOW_STATE": "DNA",
+            "BALANCED_2E_SYSTEM": "MANDALA",
+            "COMPLEX_MULTIPLEX_SYSTEM": "HYPERCORE",
+            "DEVELOPING_CONSCIOUSNESS": "MANDALA"
+        }
+        return mapping.get(system_type, "MANDALA")
 
     def _calculate_system_complexity(self, g: float, d: float) -> float:
         identity_fragments = self.system_profile['identity_fragments']
