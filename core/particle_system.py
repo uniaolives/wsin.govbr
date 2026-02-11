@@ -1,165 +1,308 @@
 """
-BIO-GÊNESE: Active Component Assembly Engine com Aprendizado
+BIO-GÊNESE ENGINE v2.0
+Sistema de partículas cognitivas com spatial hashing para performance
 """
 
 import numpy as np
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Set, Any
 import random
-from dataclasses import dataclass
+from collections import defaultdict
 from .bio_arkhe import BioAgent, ArkheGenome, MorphogeneticField
 
-# Configuração do Sistema
-INITIAL_POPULATION = 600
-FIELD_SIZE = (100, 100, 100)
-SPAWN_RADIUS = 40
+class SpatialHash:
+    """Grid espacial para consultas O(1) de vizinhança"""
 
-@dataclass
-class BioState:
-    time_step: int = 0
-    total_energy: float = 0.0
-    structure_coherence: float = 0.0
-    cognitive_diversity: float = 0.0
-    average_learning: float = 0.0
-    successful_interactions: int = 0
-    failed_interactions: int = 0
+    def __init__(self, cell_size: float = 5.0, field_size: Tuple[int, ...] = (100, 100, 100)):
+        self.cell_size = cell_size
+        self.grid: Dict[Tuple[int, ...], Set[int]] = defaultdict(set)
+        self.field_size = field_size
 
-class CognitiveParticleEngine:
-    def __init__(self, num_agents: int = INITIAL_POPULATION):
-        self.field = MorphogeneticField(size=FIELD_SIZE)
+    def _get_cell(self, position: np.ndarray) -> Tuple[int, ...]:
+        return tuple((position / self.cell_size).astype(int))
+
+    def insert(self, agent_id: int, position: np.ndarray):
+        cell = self._get_cell(position)
+        self.grid[cell].add(agent_id)
+
+    def query(self, position: np.ndarray, radius: float) -> List[int]:
+        """Retorna IDs de agentes dentro do raio"""
+        center_cell = self._get_cell(position)
+        radius_cells = int(np.ceil(radius / self.cell_size))
+
+        neighbors = []
+        for dx in range(-radius_cells, radius_cells + 1):
+            for dy in range(-radius_cells, radius_cells + 1):
+                for dz in range(-radius_cells, radius_cells + 1):
+                    cell = (center_cell[0] + dx, center_cell[1] + dy, center_cell[2] + dz)
+                    if cell in self.grid:
+                        neighbors.extend(list(self.grid[cell]))
+        return neighbors
+
+    def clear(self):
+        self.grid.clear()
+
+class BioGenesisEngine:
+    """Motor principal com otimizações de performance"""
+
+    def __init__(self, num_agents: int = 400, field_size: Tuple[int, ...] = (100, 100, 100)):
+        self.field_size = field_size
+        self.field = MorphogeneticField(field_size)
+        self.spatial_hash = SpatialHash(cell_size=5.0, field_size=field_size)
+
         self.agents: Dict[int, BioAgent] = {}
         self.agent_counter = 0
-        self.state = BioState()
-        self.signals: Dict[Tuple[int, int, int], float] = {}
-        self.simulation_step = 0
-        self._create_cognitive_soup(num_agents)
-        self._add_signal_source(np.array(FIELD_SIZE) // 2, 15.0)
+        self.time = 0.0
 
-    def _create_cognitive_soup(self, num_agents: int):
-        center = np.array(FIELD_SIZE) // 2
-        for i in range(num_agents):
+        # Fontes de sinal dinâmicas
+        self.signal_sources: List[List[Any]] = [] # [pos, strength, duration]
+
+        # Importações locais para evitar circular
+        from .constraint_engine import ConstraintLearner
+
+        # Inicialização da população
+        self._initialize_population(num_agents, ConstraintLearner)
+
+        # Métricas do sistema
+        self.metrics = {
+            'births': 0,
+            'deaths': 0,
+            'bonds_formed': 0,
+            'bonds_broken': 0,
+            'total_energy': 0.0
+        }
+
+    def _initialize_population(self, num_agents: int, ConstraintLearner):
+        """Cria população inicial com distribuição variada"""
+        center = np.array(self.field_size) / 2
+
+        for _ in range(num_agents):
+            pos = center + np.random.randn(3).astype(np.float32) * 20
+            pos = np.clip(pos, 0, np.array(self.field_size) - 1)
+
+            tribe_c = random.choice([0.2, 0.5, 0.8])
+
             genome = ArkheGenome(
-                C=random.uniform(0.1, 0.9), I=random.uniform(0.1, 0.9),
-                E=random.uniform(0.3, 1.0), F=random.uniform(0.1, 0.9)
+                C=float(np.clip(tribe_c + random.gauss(0, 0.1), 0.1, 0.9)),
+                I=random.uniform(0.2, 0.8),
+                E=random.uniform(0.3, 1.0),
+                F=random.uniform(0.1, 0.9)
             )
-            theta, phi, r = random.random()*2*np.pi, random.random()*np.pi, random.random()*SPAWN_RADIUS
-            x = center[0] + r * np.sin(phi) * np.cos(theta)
-            y = center[1] + r * np.sin(phi) * np.sin(theta)
-            z = center[2] + r * np.cos(phi)
-            agent = BioAgent(self.agent_counter, np.array([x, y, z]), genome)
+
+            agent = BioAgent(self.agent_counter, pos, genome)
+            brain = ConstraintLearner(self.agent_counter, genome.to_vector())
+            agent.attach_brain(brain)
+
             self.agents[self.agent_counter] = agent
             self.agent_counter += 1
 
-    def _add_signal_source(self, position: np.ndarray, strength: float):
-        x, y, z = position.astype(int)
-        self.signals[(x, y, z)] = strength
+        self.add_signal_source(center, 20.0, float('inf'))
 
-    def update(self, dt: float):
-        self.simulation_step += 1
-        self.state.time_step = self.simulation_step
+    def add_signal_source(self, position: np.ndarray, strength: float, duration: float = 100.0):
+        """Adiciona fonte de sinal temporária ou permanente"""
+        self.signal_sources.append([position.copy(), strength, duration])
+
+    def update(self, dt: float = 0.1):
+        """Loop principal de simulação"""
+        self.time += dt
+
+        # 1. Atualiza campo morfogenético
+        self._update_field()
+
+        # 2. Atualiza spatial hash
+        self.spatial_hash.clear()
         for agent in self.agents.values():
-            agent.prev_health = agent.health
+            if agent.alive:
+                self.spatial_hash.insert(agent.id, agent.position)
 
-        self._update_morphogenetic_field()
-
-        # Agentes
+        # 3. Processa agentes
         for agent in list(self.agents.values()):
-            if agent.health <= 0: continue
-            sensory = agent.perceive_environment(self.field)
-            vel = agent.decide_movement(sensory, self.agents)
-            agent.velocity = agent.velocity * 0.8 + vel * 0.2
+            if not agent.alive:
+                continue
 
-            # Absorção de sinal
-            local_sig = self.field.get_signal_at(agent.position)
-            if local_sig > 5.0: agent.health = min(1.5, agent.health + 0.005)
+            nearby_ids = self.spatial_hash.query(agent.position, radius=10.0)
+            nearby_agents = [self.agents[i] for i in nearby_ids if i in self.agents and self.agents[i].alive]
 
-            agent.update_physics(dt)
+            perception = agent.perceive(self.field, nearby_agents)
+            acceleration = agent.decide(perception, self.time)
+            agent.acceleration = acceleration
 
-        self._process_cognitive_interactions()
-        self._learning_feedback()
-        self._purge_dead_agents()
+            agent.update_physics(dt, self.field)
+
+            if agent.health > 0.6 and agent.genome.F > 0.5:
+                self.field.add_signal(agent.position, agent.genome.F * 0.3)
+
+        # 4. Interações e aprendizado
+        self._process_interactions()
+
+        # 5. Reprodução seletiva
+        self._process_reproduction()
+
+        # 6. Limpeza e métricas
+        self._cleanup()
         self._update_metrics()
 
-    def _update_morphogenetic_field(self):
-        self.field.signal_grid.fill(0)
-        for (x, y, z), strength in self.signals.items():
-            if 0 <= x < 100 and 0 <= y < 100 and 0 <= z < 100:
-                self.field.signal_grid[x, y, z] += strength
-        for agent in self.agents.values():
-            if agent.health > 0:
-                pos = agent.position.astype(int)
-                if 0 <= pos[0] < 100 and 0 <= pos[1] < 100 and 0 <= pos[2] < 100:
-                    self.field.signal_grid[pos[0], pos[1], pos[2]] += agent.genome.F * agent.genome.E
-        self.field._diffuse_signal()
+    def _update_field(self):
+        """Atualiza sinais do ambiente"""
+        self.field.diffuse()
+        new_sources = []
+        for source in self.signal_sources:
+            pos, strength, remaining = source
+            self.field.add_signal(pos, strength)
+            if remaining != float('inf'):
+                remaining -= 1
+                if remaining > 0:
+                    source[2] = remaining
+                    new_sources.append(source)
+            else:
+                new_sources.append(source)
+        self.signal_sources = new_sources
 
-    def _process_cognitive_interactions(self):
-        agent_list = list(self.agents.values())
-        COST = 0.0002
-        for i, agent in enumerate(agent_list):
-            if agent.health <= 0: continue
-            for nid in list(agent.neighbors):
-                neighbor = self.agents.get(nid)
-                if not neighbor or neighbor.health <= 0:
-                    agent.neighbors.remove(nid); continue
-                agent.health -= COST
-                comp = 1.0 - abs(agent.genome.C - neighbor.genome.C)
-                if comp > 0.6: agent.health = min(1.5, agent.health + 0.004 * comp)
-                elif comp < 0.3: agent.health -= 0.001
+    def _process_interactions(self):
+        """Processa colisões e aprendizado (O(n) com spatial hash)"""
+        processed_pairs = set()
 
-            if len(agent.neighbors) >= 6: continue
-            # Amostra para novas conexões
-            for other in random.sample(agent_list, min(len(agent_list), 10)):
-                if other.id == agent.id or other.health <= 0 or len(other.neighbors) >= 6: continue
-                if np.linalg.norm(agent.position - other.position) < 4.0:
-                    ok_a, _ = agent.evaluate_connection(other)
-                    ok_b, _ = other.evaluate_connection(agent)
-                    if ok_a and ok_b:
-                        if other.id not in agent.neighbors:
-                            agent.neighbors.append(other.id)
-                            other.neighbors.append(agent.id)
-                            self.state.successful_interactions += 1
+        for agent in list(self.agents.values()):
+            if not agent.alive:
+                continue
+
+            close_ids = self.spatial_hash.query(agent.position, radius=3.0)
+
+            for other_id in close_ids:
+                if other_id <= agent.id:
+                    continue
+                if other_id not in self.agents:
+                    continue
+
+                other = self.agents[other_id]
+                if not other.alive:
+                    continue
+
+                pair = (agent.id, other_id)
+                if pair in processed_pairs:
+                    continue
+                processed_pairs.add(pair)
+
+                dist = np.linalg.norm(agent.position - other.position)
+
+                if dist < 2.0:
+                    compatibility = 1.0 - abs(agent.genome.C - other.genome.C)
+
+                    if other_id in agent.neighbors:
+                        energy_exchange = (compatibility - 0.5) * 0.01
+                        agent.health += energy_exchange
+                        other.health += energy_exchange
+
+                        if energy_exchange > 0:
+                            agent.bond_strengths[other_id] = min(
+                                agent.bond_strengths.get(other_id, 0.5) + 0.01, 1.0
+                            )
                     else:
-                        self.state.failed_interactions += 1
+                        if agent.brain and other.brain:
+                            score_a, _ = agent.brain.evaluate_partner(
+                                other.genome, other.id, self.time
+                            )
+                            score_b, _ = other.brain.evaluate_partner(
+                                agent.genome, agent.id, self.time
+                            )
 
-    def _learning_feedback(self):
-        for agent in self.agents.values():
-            if agent.health <= 0: continue
-            delta = agent.health - agent.prev_health
-            if abs(delta) > 0.0001:
-                if agent.neighbors:
-                    share = delta / len(agent.neighbors)
-                    for nid in agent.neighbors:
-                        neighbor = self.agents.get(nid)
-                        if neighbor:
-                            agent.brain.learn_from_interaction(neighbor.genome, nid, share, self.simulation_step)
-                elif abs(delta) > 0.001:
-                    agent.brain.learn_from_interaction(ArkheGenome(0.5,0.5,0.5,0.5), -1, delta*2, self.simulation_step)
+                            if score_a > 0.1 and score_b > 0.1 and len(agent.neighbors) < 6 and len(other.neighbors) < 6:
+                                agent.form_bond(other, strength=float(min(score_a, score_b)))
+                                self.metrics['bonds_formed'] += 1
 
-    def _purge_dead_agents(self):
-        dead = [aid for aid, a in self.agents.items() if a.health <= 0]
-        for aid in dead: del self.agents[aid]
+                                agent.brain.learn_from_interaction(
+                                    other.genome, other.id, 0.1, self.time
+                                )
+                                other.brain.learn_from_interaction(
+                                    agent.genome, agent.id, 0.1, self.time
+                                )
+                            else:
+                                if score_a < -0.2:
+                                    agent.brain.learn_from_interaction(
+                                        other.genome, other.id, -0.05, self.time
+                                    )
+                                if score_b < -0.2:
+                                    other.brain.learn_from_interaction(
+                                        agent.genome, agent.id, -0.05, self.time
+                                    )
+
+    def _process_reproduction(self):
+        """Reprodução assexuada de agentes muito saudáveis"""
+        new_agents = []
+
+        for agent in list(self.agents.values()):
+            if agent.health > 1.5 and agent.age > 50:
+                agent.health *= 0.6
+                child_genome = agent.genome.mutate(rate=0.05)
+                child_pos = agent.position + np.random.randn(3).astype(np.float32) * 2
+
+                child = BioAgent(self.agent_counter, child_pos, child_genome)
+                from .constraint_engine import ConstraintLearner
+                brain = ConstraintLearner(self.agent_counter, child_genome.to_vector())
+                child.attach_brain(brain)
+
+                new_agents.append((self.agent_counter, child))
+                self.agent_counter += 1
+                self.metrics['births'] += 1
+
+        for aid, agent in new_agents:
+            self.agents[aid] = agent
+
+    def _cleanup(self):
+        """Remove agentes mortos e conexões inválidas"""
+        dead = [aid for aid, a in self.agents.items() if not a.alive]
+
+        for aid in dead:
+            agent = self.agents[aid]
+            for nid in agent.neighbors:
+                if nid in self.agents and self.agents[nid].alive:
+                    neighbor = self.agents[nid]
+                    neighbor.break_bond(aid)
+                    if neighbor.brain:
+                        neighbor.brain.learn_from_interaction(
+                            agent.genome, aid, -0.2, self.time
+                        )
+            del self.agents[aid]
+            self.metrics['deaths'] += 1
 
     def _update_metrics(self):
-        if not self.agents: return
-        self.state.total_energy = sum(a.health for a in self.agents.values()) / len(self.agents)
-        self.state.structure_coherence = sum(len(a.neighbors) for a in self.agents.values()) / (len(self.agents)*6 + 1e-6)
-        weights = [a.brain.weights for a in self.agents.values()]
-        if len(weights) > 1: self.state.cognitive_diversity = float(np.mean(np.std(weights, axis=0)))
-        success = [a.brain.get_cognitive_state()['success_rate'] for a in self.agents.values()]
-        self.state.average_learning = float(np.mean(success))
+        """Atualiza estatísticas globais"""
+        if self.agents:
+            self.metrics['total_energy'] = float(sum(a.health for a in self.agents.values()) / len(self.agents))
 
-    def get_render_data(self):
-        p, e, c, cog = [], [], [], []
-        for a in self.agents.values():
-            if a.health > 0:
-                p.append(a.position.copy()); e.append(a.health); c.append(a.neighbors.copy())
-                s_rate = a.brain.get_cognitive_state()['success_rate']
-                cog.append("smart" if s_rate > 0.6 else "confused" if s_rate < 0.3 else "neutral")
-        return p, e, c, cog
+    def get_render_data(self) -> Tuple[List, List, List, List, List]:
+        """Dados para visualização"""
+        positions, energies, connections, cognitive_states, colors = [], [], [], [], []
 
-    def get_agent_info(self, aid):
-        a = self.agents.get(aid)
-        if not a: return None
-        return {"id": a.id, "health": a.health, "genome": str(a.genome), "profile": a.brain.get_weights_description(), "mood": a.mood}
+        for agent in self.agents.values():
+            if not agent.alive:
+                continue
 
-    def inject_signal(self, pos, strength=10.0):
-        self._add_signal_source(pos, strength)
+            positions.append(agent.position.copy().tolist())
+            energies.append(float(agent.health))
+            connections.append([(agent.id, nid) for nid in agent.neighbors])
+
+            if agent.brain:
+                cog = agent.brain.get_cognitive_state()
+                cognitive_states.append(cog)
+                success = cog['success_rate']
+                exploration = cog['exploration']
+                r = float(1.0 - success)
+                g = float(success)
+                b = float(exploration)
+                colors.append((r, g, b))
+            else:
+                cognitive_states.append({})
+                colors.append((0.5, 0.5, 0.5))
+
+        return positions, energies, connections, cognitive_states, colors
+
+    def get_system_state(self) -> dict:
+        """Estado geral do sistema para UI"""
+        return {
+            'time': float(self.time),
+            'population': len([a for a in self.agents.values() if a.alive]),
+            'avg_energy': float(self.metrics['total_energy']),
+            'births': self.metrics['births'],
+            'deaths': self.metrics['deaths'],
+            'bonds': self.metrics['bonds_formed']
+        }

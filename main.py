@@ -1,53 +1,53 @@
+#!/usr/bin/env python3
 """
-BIO-GÊNESE COGNITIVA: Sistema de Arquitetura Viva Aprendente
-Ponto de entrada do organismo sintético com consciência embarcada
+BIO-GÊNESE COGNITIVA v2.0
+Ponto de entrada do sistema de vida artificial com cognição embarcada.
 """
 
 import sys
 import os
 
-# Configura caminhos
+# Adiciona o diretório raiz ao path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-try:
-    from gui.view_3d import CognitiveViewer, HAS_PYGLET
-except ImportError:
-    HAS_PYGLET = False
+def check_dependencies():
+    try:
+        import numpy
+        import scipy
+        return True
+    except ImportError as e:
+        print(f"Erro: Dependência faltando: {e}")
+        return False
+
+def run_headless(engine, steps=100):
+    print(f"Executando simulação Headless ({steps} passos)...")
+    for i in range(steps + 1):
+        engine.update(0.1)
+        if i % 20 == 0:
+            state = engine.get_system_state()
+            print(f"Passo {i}: Pop={state['population']}, Energia={state['avg_energy']:.3f}, Vínculos={state['bonds']}")
+    print("Simulação concluída.")
 
 def main():
     print("=" * 70)
-    print("BIO-GÊNESE COGNITIVA: Sistema de Arquitetura Viva Aprendente")
+    print("  BIO-GÊNESE COGNITIVA v2.0")
+    print("  Sistema de Vida Artificial com Cognição Embarcada")
     print("=" * 70)
-    print("\n🧠 PRINCÍPIOS ATIVOS:")
-    print("1. Autonomia Multi-escala - Agentes independentes")
-    print("2. Crescimento via Auto-montagem - Estruturas emergentes")
-    print("3. Restrições Adaptativas - Aprendizado Hebbiano em tempo real")
-    print("4. Computação Embarcada - Micro-cérebros por agente")
-    print("5. Sinalização Pervasiva - Campo morfogenético dinâmico")
-    print("\n🎯 CARACTERÍSTICAS:")
-    print("• 600 agentes com cérebros Hebbianos")
-    print("• Aprendizado baseado em feedback metabólico")
-    print("• Memória episódica de interações")
-    print("• Preferências cognitivas desenvolvidas")
-    print("• Simbiose e parasitismo energético")
-    print("\n" + "=" * 70)
 
-    if HAS_PYGLET:
-        print("Ambiente sandbox: Execução gráfica suprimida.")
-        run_headless()
+    if not check_dependencies():
+        sys.exit(1)
+
+    from core.particle_system import BioGenesisEngine
+    from gui.view_3d import CognitiveVisualizer, HAS_PYGLET
+
+    engine = BioGenesisEngine(num_agents=400)
+
+    if HAS_PYGLET and os.environ.get('DISPLAY'):
+        print("Iniciando visualizador 3D...")
+        window = CognitiveVisualizer(engine)
+        window.run()
     else:
-        run_headless()
-
-def run_headless():
-    print("Iniciando simulação Headless...")
-    from core.particle_system import CognitiveParticleEngine
-    engine = CognitiveParticleEngine(num_agents=100)
-    for i in range(101):
-        engine.update(0.1)
-        if i % 20 == 0:
-            stats = engine.state
-            print(f"Step {i}: Agentes={len(engine.agents)}, Energia={stats.total_energy:.3f}, Sucesso={stats.average_learning:.2f}")
-    print("\nSimulação concluída com sucesso.")
+        run_headless(engine)
 
 if __name__ == "__main__":
     main()

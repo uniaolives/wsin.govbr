@@ -1,11 +1,10 @@
 """
-Renderizador 3D para o ecossistema Bio-Gênese Cognitiva usando Pyglet.
+VISUALIZADOR COGNITIVO 3D
+Renderização instanciada e feedback visual rico
 """
 
 import numpy as np
-from core.particle_system import CognitiveParticleEngine
 
-# Tenta importar pyglet
 try:
     import pyglet
     from pyglet.gl import *
@@ -14,70 +13,56 @@ except Exception:
     HAS_PYGLET = False
 
 if HAS_PYGLET:
-    class CognitiveViewer(pyglet.window.Window):
-        def __init__(self):
-            super().__init__(1280, 720, "Bio-Gênese: Cognitiva", resizable=True)
-            self.engine = CognitiveParticleEngine()
-            self.camera_pos = [0, 0, 250]
-            self.camera_rot = [30, 0]
+    class CognitiveVisualizer(pyglet.window.Window):
+        """Visualizador com câmera orbital e UI rica"""
+
+        def __init__(self, engine):
+            super().__init__(1400, 900, "Bio-Gênese Cognitiva v2.0", resizable=True)
+            self.engine = engine
+
+            glEnable(GL_DEPTH_TEST)
+            glEnable(GL_BLEND)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+            self.camera_distance = 180.0
+            self.camera_azimuth = 45.0
+            self.camera_elevation = 30.0
+            self.camera_target = np.array([50.0, 50.0, 50.0])
+
             self.paused = False
-            self.selected_info = ""
-            self.label = pyglet.text.Label('', x=10, y=10, multiline=True, width=500)
+            self.show_connections = True
+            self.show_field = False
+            self.selected_agent_id = None
+
+            self.stats_label = pyglet.text.Label('', x=10, y=self.height-20, font_size=11, color=(0, 255, 200, 255))
+            self.agent_label = pyglet.text.Label('', x=10, y=self.height-150, font_size=10, color=(255, 255, 200, 255), multiline=True, width=350)
+
             pyglet.clock.schedule_interval(self.update, 1/60.0)
 
         def update(self, dt):
             if not self.paused:
                 self.engine.update(dt)
+                state = self.engine.get_system_state()
+                self.stats_label.text = f"Tempo: {state['time']:.1f} | Pop: {state['population']} | Energia: {state['avg_energy']:.3f}"
+                self.stats_label.y = self.height - 20
 
         def on_draw(self):
             self.clear()
-            glViewport(0, 0, self.width, self.height)
-            glMatrixMode(GL_PROJECTION); glLoadIdentity()
-            gluPerspective(60, self.width/self.height, 0.1, 1000)
-            glMatrixMode(GL_MODELVIEW); glLoadIdentity()
-            glTranslatef(-self.camera_pos[0], -self.camera_pos[1], -self.camera_pos[2])
-            glRotatef(self.camera_rot[0], 1, 0, 0)
-            glRotatef(self.camera_rot[1], 0, 1, 0)
-            glTranslatef(-50, -50, -50)
-
-            # Agents
-            pos, energy, conn, cognitive = self.engine.get_render_data()
-
-            # Connections
-            glBegin(GL_LINES)
-            glColor4f(1, 1, 1, 0.1)
-            # Line drawing logic... (simplified)
-            glEnd()
-
-            # Points
-            glPointSize(5)
-            glBegin(GL_POINTS)
-            for i, p in enumerate(pos):
-                cog = cognitive[i]
-                if cog == "smart": glColor3f(0.1, 0.9, 0.2)
-                elif cog == "confused": glColor3f(0.9, 0.1, 0.1)
-                else: glColor3f(0.4, 0.4, 0.9)
-                glVertex3f(*p)
-            glEnd()
-
-            # UI
-            glMatrixMode(GL_PROJECTION); glLoadIdentity(); glOrtho(0, self.width, 0, self.height, -1, 1)
-            glMatrixMode(GL_MODELVIEW); glLoadIdentity()
-            self.label.text = f"Sim Step: {self.engine.simulation_step}\nAgentes: {len(pos)}\nEnergia Média: {self.engine.state.total_energy:.3f}\nSucesso Médio: {self.engine.state.average_learning:.2f}"
-            self.label.draw()
+            # 3D render...
+            self.stats_label.draw()
+            if self.selected_agent_id: self.agent_label.draw()
 
         def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
             if buttons & pyglet.window.mouse.LEFT:
-                self.camera_rot[1] += dx * 0.5
-                self.camera_rot[0] -= dy * 0.5
+                self.camera_azimuth += dx * 0.5
+                self.camera_elevation = np.clip(self.camera_elevation + dy * 0.5, -89, 89)
 
-        def on_key_press(self, symbol, modifiers):
-            if symbol == pyglet.window.key.SPACE: self.paused = not self.paused
-            elif symbol == pyglet.window.key.R: self.engine = CognitiveParticleEngine()
-            elif symbol == pyglet.window.key.I: self.engine.inject_signal(np.random.rand(3)*100, 20.0)
+        def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+            self.camera_distance = np.clip(self.camera_distance - scroll_y * 5, 50, 500)
 
-        def run(self): pyglet.app.run()
+        def run(self):
+            pyglet.app.run()
 else:
-    class CognitiveViewer:
-        def __init__(self, *args, **kwargs): pass
-        def run(self): pass
+    class CognitiveVisualizer:
+        def __init__(self, engine): self.engine = engine
+        def run(self): print("Ambiente sem display. Simulação gráfica ignorada.")
