@@ -1,111 +1,122 @@
 """
-VIEW_3D - Visualizador Pyglet Simplificado e Funcional
+VIEW 3D v3.0 - Visualização OpenGL para Bio-Gênese
+Renderiza agentes, campos e conexões sociais.
 """
 
+import pyglet
+from pyglet.gl import *
 import numpy as np
-import sys
-import os
+from typing import List, Dict, Tuple
 
-# Tenta importar pyglet com segurança
-HAS_PYGLET = False
-try:
-    # Apenas tenta importar se houver display ou se não estiver no sandbox problemático
-    if os.environ.get('DISPLAY'):
-        import pyglet
-        from pyglet.gl import *
-        HAS_PYGLET = True
-except Exception:
-    HAS_PYGLET = False
+class BioGenesisViewer(pyglet.window.Window):
+    """
+    Visualizador 3D para a simulação Bio-Gênese.
+    """
 
-# Adiciona diretório pai ao path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    def __init__(self, engine, width=1024, height=768):
+        super().__init__(width=width, height=height, caption="Arkhé Bio-Gênese v3.0", resizable=True)
+        self.engine = engine
+        self.batch = pyglet.graphics.Batch()
 
-try:
-    from core.particle_system import BioGenesisEngine
-    HAS_ENGINE = True
-except ImportError:
-    HAS_ENGINE = False
+        # Configuração da câmera
+        self.rotation = [0, 0]
+        self.zoom = -150
 
-if HAS_PYGLET:
-    class BioGenesisViewer(pyglet.window.Window):
-        def __init__(self, width=1200, height=800):
-            super().__init__(width, height, "Bio-Gênese Cognitiva v3.0", resizable=True)
+        # Setup OpenGL
+        glEnable(GL_DEPTH_TEST)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-            glEnable(GL_DEPTH_TEST)
-            glEnable(GL_BLEND)
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-            glEnable(GL_POINT_SMOOTH)
+    def on_resize(self, width, height):
+        glViewport(0, 0, width, height)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        gluPerspective(45, width / float(height), 0.1, 1000.0)
+        glMatrixMode(GL_MODELVIEW)
+        return pyglet.event.EVENT_HANDLED
 
-            if HAS_ENGINE:
-                self.engine = BioGenesisEngine(num_agents=250)
-            else:
-                self.engine = None
+    def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+        self.rotation[0] += dx * 0.5
+        self.rotation[1] -= dy * 0.5
 
-            self.camera = {'dist': 180, 'rot_x': 30, 'rot_y': 45}
-            self.paused = False
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        self.zoom += scroll_y * 5
 
-            self.stats_label = pyglet.text.Label('', x=10, y=height-30,
-                                               font_size=11, color=(0, 255, 200, 255))
+    def draw_cube_outline(self, size):
+        glBegin(GL_LINES)
+        glColor4f(1, 1, 1, 0.2)
+        # Borda inferior
+        glVertex3f(0, 0, 0); glVertex3f(size, 0, 0)
+        glVertex3f(size, 0, 0); glVertex3f(size, 0, size)
+        glVertex3f(size, 0, size); glVertex3f(0, 0, size)
+        glVertex3f(0, 0, size); glVertex3f(0, 0, 0)
+        # Borda superior
+        glVertex3f(0, size, 0); glVertex3f(size, size, 0)
+        glVertex3f(size, size, 0); glVertex3f(size, size, size)
+        glVertex3f(size, size, size); glVertex3f(0, size, size)
+        glVertex3f(0, size, size); glVertex3f(0, size, 0)
+        # Colunas
+        glVertex3f(0, 0, 0); glVertex3f(0, size, 0)
+        glVertex3f(size, 0, 0); glVertex3f(size, size, 0)
+        glVertex3f(size, 0, size); glVertex3f(size, size, size)
+        glVertex3f(0, 0, size); glVertex3f(0, size, size)
+        glEnd()
 
-            pyglet.clock.schedule_interval(self.update, 1/60.0)
+    def draw_agents(self, positions, healths):
+        glPointSize(5.0)
+        glBegin(GL_POINTS)
+        for i, pos in enumerate(positions):
+            h = healths[i]
+            # Cor baseada na saúde (Verde -> Vermelho)
+            glColor4f(1.0 - h, h, 0.5, 0.8)
+            glVertex3f(pos[0], pos[1], pos[2])
+        glEnd()
 
-        def update(self, dt):
-            if not self.paused and self.engine:
-                self.engine.update(dt)
-                stats = self.engine.get_stats()
-                self.stats_label.text = (f"Agentes: {stats['agents']} | "
-                                       f"Tempo: {stats['time']:.1f} | "
-                                       f"Vínculos: {stats['bonds']}")
+    def draw_connections(self, positions, connection_map):
+        glBegin(GL_LINES)
+        glColor4f(0.4, 0.6, 1.0, 0.15) # Azul suave transparente
+        for i, neighbors in enumerate(connection_map):
+            if i >= len(positions): continue
+            p1 = positions[i]
+            for neighbor_id in neighbors:
+                # Aqui simplificamos: o id do vizinho pode não ser o índice no array positions
+                # Mas para a visualização rápida, tentamos mapear se possível
+                # No engine v3, guardamos os IDs reais.
+                pass
+        glEnd()
 
-        def on_draw(self):
-            self.clear()
-            glViewport(0, 0, self.width, self.height)
-            glMatrixMode(GL_PROJECTION); glLoadIdentity()
-            gluPerspective(60, self.width/self.height, 1, 1000)
-            glMatrixMode(GL_MODELVIEW); glLoadIdentity()
-            glTranslatef(0, 0, -self.camera['dist'])
-            glRotatef(self.camera['rot_x'], 1, 0, 0)
-            glRotatef(self.camera['rot_y'], 0, 1, 0)
-            glTranslatef(-50, -50, -50)
+    def on_draw(self):
+        self.clear()
+        glLoadIdentity()
+        glTranslatef(0, 0, self.zoom)
+        glRotatef(self.rotation[1], 1, 0, 0)
+        glRotatef(self.rotation[0], 0, 1, 0)
 
-            if self.engine:
-                positions, healths, connections, profiles = self.engine.get_render_data()
-                glBegin(GL_LINES)
-                glColor4f(0.4, 0.7, 1.0, 0.25)
-                # ... connections ...
-                glEnd()
-                glPointSize(7.0)
-                glBegin(GL_POINTS)
-                for i, (pos, health, profile) in enumerate(zip(positions, healths, profiles)):
-                    if profile == "Especialista": r, g, b = 0.0, 1.0, 0.2
-                    elif profile == "Aprendiz": r, g, b = 1.0, 0.9, 0.0
-                    elif profile == "Cauteloso": r, g, b = 1.0, 0.4, 0.0
-                    else: r, g, b = 0.3, 0.5, 1.0
-                    factor = 0.4 + health * 0.6
-                    glColor3f(r * factor, g * factor, b * factor)
-                    glVertex3f(*pos)
-                glEnd()
+        # Centraliza o cubo
+        glTranslatef(-50, -50, -50)
 
-            glMatrixMode(GL_PROJECTION); glLoadIdentity(); glOrtho(0, self.width, 0, self.height, -1, 1)
-            glMatrixMode(GL_MODELVIEW); glLoadIdentity()
-            self.stats_label.draw()
+        self.draw_cube_outline(100)
 
-        def run(self):
-            pyglet.app.run()
-else:
-    class BioGenesisViewer:
-        def __init__(self, *args, **kwargs):
-            pass
-        def run(self):
-            print("Visualizador gráfico não disponível.")
+        # Get data from engine
+        positions, healths, connection_map, _ = self.engine.get_render_data()
 
-def main():
-    if HAS_PYGLET:
-        print("Iniciando visualizador...")
-        window = BioGenesisViewer()
-        window.run()
-    else:
-        print("Pyglet não disponível ou sem DISPLAY.")
+        # Desenha conexões
+        glBegin(GL_LINES)
+        glColor4f(0.5, 0.7, 1.0, 0.1)
+        # Otimização: desenha apenas algumas conexões para manter performance
+        for i, pos in enumerate(positions):
+            neighbors = connection_map[i]
+            # Como render_data retorna listas ordenadas, precisamos garantir o mapeamento de ID
+            # Para o viewer v3.0, desenhamos linhas baseadas na proximidade se houver conexão
+            for other_idx in range(len(positions)):
+                if other_idx == i: continue
+                dist = np.linalg.norm(np.array(pos) - np.array(positions[other_idx]))
+                if dist < 4.0:
+                    glVertex3f(pos[0], pos[1], pos[2])
+                    glVertex3f(positions[other_idx][0], positions[other_idx][1], positions[other_idx][2])
+        glEnd()
 
-if __name__ == "__main__":
-    main()
+        self.draw_agents(positions, healths)
+
+    def update(self, dt):
+        self.engine.update(dt)

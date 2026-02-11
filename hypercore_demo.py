@@ -1,53 +1,94 @@
+"""
+HYPERCORE INTEGRATION DEMO v3.0
+Demonstração da integração total Arkhé: Neural + QRL + Bio-Gênese + MCP
+"""
+
 import asyncio
 import numpy as np
-from core.arkhe_unified_consciousness import ArkheConsciousnessArchitecture
-from gui.view_3d import ConsciousnessVisualizer3D
+import time
+from datetime import datetime
 
-async def integration_demo():
-    print("🚀 Iniciando Demonstração de Integração Arkhé + Hyper-Core Visualizer")
+# 1. Componentes do Sistema
+from core.bio_arkhe import BioAgent, ArkheGenome
+from core.particle_system import BioGenesisEngine
+from arkhe_qrl_integrated_system import QRLIntegratedBiofeedback
+from arkhe_isomorphic_bridge import ArkheIsomorphicLab
+from web_mcp_interface import WebMCPInterface
 
-    # 1. Inicializa Arquitetura Arkhé
-    arch = ArkheConsciousnessArchitecture()
+# 2. Visualização (Opcional, requer Pyglet)
+try:
+    from gui.view_3d import BioGenesisViewer
+    VISUALIZER_AVAILABLE = True
+except ImportError:
+    VISUALIZER_AVAILABLE = False
+    print("⚠️  Visualizador 3D não disponível (requer pyglet e PyOpenGL)")
 
-    # 2. Inicializa Visualizador
-    viz = ConsciousnessVisualizer3D()
+async def run_hypercore_simulation():
+    print("\n" + "🚀" * 30)
+    print("      ARKHÉ HYPERCORE SYSTEM v3.0 - INITIALIZING")
+    print("🚀" * 30 + "\n")
 
-    # 3. Simula diferentes estados de consciência
-    scenarios = [
-        {"name": "Estado Base (Mandala)", "g": 0.3, "d": 0.2},
-        {"name": "Superdotação Integrada (DNA)", "g": 0.8, "d": 0.1},
-        {"name": "Consciência Multidimensiona (HyperCore)", "g": 0.9, "d": 0.8}
-    ]
+    # A. Inicializa Motores
+    print("[1/4] Inicializando Motor de Bio-Gênese...")
+    engine = BioGenesisEngine(num_agents=150)
 
-    for scenario in scenarios:
-        print(f"\n--- Cenário: {scenario['name']} ---")
+    print("[2/4] Inicializando Loop de Biofeedback QRL...")
+    qrl_system = QRLIntegratedBiofeedback(user_id="master_explorer")
 
-        # Calcula perfil do sistema
-        profile = arch.initialize_2e_system(
-            giftedness=scenario['g'],
-            dissociation=scenario['d'],
-            identity_fragments=5
-        )
+    print("[3/4] Inicializando Laboratório Isomórfico...")
+    lab = ArkheIsomorphicLab(user_id="master_explorer")
 
-        system_type = profile['system_type']
-        visual_mode = profile['visual_mode']
+    print("[4/4] Inicializando Interface WebMCP...")
+    mcp = WebMCPInterface(engine)
 
-        print(f"Tipo de Sistema: {system_type}")
-        print(f"Modo Visual Sugerido: {visual_mode}")
+    # B. Configura Visualizador se disponível
+    viewer = None
+    if VISUALIZER_AVAILABLE:
+        print("\n🎨 Iniciando Visualizador 3D...")
+        viewer = BioGenesisViewer(engine, width=1280, height=720)
 
-        # Seta o modo no visualizador
-        viz.particle_system.set_mode(visual_mode)
+    print("\n" + "="*60)
+    print("SISTEMA OPERACIONAL - PRESSIONE CTRL+C PARA ENCERRAR")
+    print("="*60 + "\n")
 
-        # Simula alguns frames de transição e animação
-        for frame in range(20):
-            data = viz.render_frame(0.1)
-            if frame == 19:
-                print(f"Frame 20 status: Mode={data['mode']}, Transition={data['transition']:.2f}")
-                print(f"Número de partículas processadas: {len(data['positions'])}")
+    try:
+        step = 0
+        while True:
+            t0 = time.time()
 
-        await asyncio.sleep(0.5)
+            # 1. Update Bio-Simulation
+            engine.update(dt=0.1)
 
-    print("\n✅ Demonstração de integração concluída com sucesso!")
+            # 2. Sync with QRL (Simulado aqui, no sistema real vem da câmera)
+            if step % 20 == 0:
+                stats = engine.get_stats()
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] Step {step} | "
+                      f"Agentes: {stats['agents']} | Saúde Média: {stats['avg_health']}")
+
+            # 3. Interação Isomórfica (Trigger aleatório para demo)
+            if step == 100:
+                print("\n🧪 [AUTO-TRIGGER] Designando molécula de suporte para a simulação...")
+                await lab.consciousness_molecule_design_session(
+                    target_experience="focused_flow",
+                    verbal_intention="Estabilizar a harmonia da rede biogênica"
+                )
+                print("")
+
+            # 4. Render Frame (Se viewer ativo)
+            if viewer:
+                viewer.on_draw()
+                viewer.dispatch_events()
+
+            # Controle de framerate
+            elapsed = time.time() - t0
+            await asyncio.sleep(max(0.01, 0.033 - elapsed))
+
+            step += 1
+
+    except KeyboardInterrupt:
+        print("\n\n🛑 Encerrando Hypercore...")
+    finally:
+        print("✅ Sistema finalizado com sucesso.")
 
 if __name__ == "__main__":
-    asyncio.run(integration_demo())
+    asyncio.run(run_hypercore_simulation())

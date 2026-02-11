@@ -1,97 +1,105 @@
 """
-CONSTRAINT ENGINE v3.0 - Micro-cérebro Hebbiano Otimizado
-Aprendizado metabólico com memória de trabalho e atenção seletiva
+CONSTRAINT ENGINE v3.0 - Micro-cérebro Hebbiano com Memória Temporal
+Implementa aprendizado por reforço metabólico e curiosidade artificial
 """
 
 import numpy as np
-from dataclasses import dataclass
-from typing import List, Tuple, Optional, Dict
-from collections import deque
 import random
+from collections import deque
+from dataclasses import dataclass
+from typing import Optional, Tuple
+
 
 @dataclass
 class SynapticTrace:
-    """Traço de memória com decaimento temporal"""
+    """Traço de memória episódica com decaimento temporal"""
     partner_signature: str
     energy_delta: float
     timestamp: float
 
     def decay_factor(self, current_time: float, tau: float = 100.0) -> float:
-        return np.exp(-(current_time - self.timestamp) / tau)
+        """Peso da memória decai exponencialmente com o tempo"""
+        return np.exp(-abs(current_time - self.timestamp) / tau)
+
 
 class ConstraintLearner:
     """
-    Cérebro Hebbiano com:
-    - STDP (Spike-Timing Dependent Plasticity) simplificado
-    - Atenção seletiva por novidade
+    Sistema cognitivo Hebbiano com:
+    - Plasticidade sináptica dependente do tempo (STDP)
+    - Exploração guiada por curiosidade (novelty search)
+    - Memória de trabalho para reconhecimento de padrões sequenciais
     - Meta-aprendizado adaptativo
     """
 
-    def __init__(self, agent_id: int, genome_vector: np.ndarray = None):
+    def __init__(self, agent_id: int, genome_vector: Optional[np.ndarray] = None):
         self.agent_id = agent_id
 
-        # Pesos sinápticos para [C, I, E, F]
+        # Pesos sinápticos para [C, I, E, F] - inicialmente tabula rasa
         self.weights = np.zeros(4, dtype=np.float32)
         self.bias = 0.0
-
-        # Taxa de aprendizado adaptativa
-        self.lr_base = 0.15
-        self.lr_current = self.lr_base
+        self.learning_rate = 0.15
 
         # Memória de trabalho (últimas 15 interações)
         self.working_memory: deque[SynapticTrace] = deque(maxlen=15)
 
-        # Estado interno
+        # Estado de exploração-curiosidade
         self.exploration_rate = 0.3
-        self.last_prediction_error = 0.0
+        self.novelty_threshold = 0.2
 
-        # Estatísticas
+        # Estatísticas para perfil cognitivo
         self.metrics = {
-            'successful_bonds': 0,
-            'toxic_bonds': 0,
+            'successful_interactions': 0,
+            'failed_interactions': 0,
             'total_energy_gained': 0.0,
             'total_energy_lost': 0.0,
-            'predictions': 0,
-            'surprises': 0
+            'prediction_errors': []
         }
 
-        # Autoconhecimento: preferência inicial por similaridade
+        # Autoconhecimento: inicialização baseada no próprio genoma
         if genome_vector is not None:
+            # Preferência inicial por similaridade (clones de si mesmo)
             self.weights = genome_vector * 0.3
 
-    def evaluate_partner(self, partner_genome, current_time: float) -> Tuple[float, str]:
+    def evaluate_partner(self, partner_genome, current_time: float = 0.0) -> Tuple[float, str]:
         """
-        Avalia parceiro com integração bayesiana aproximada
+        Avalia um parceiro potencial usando integração bayesiana aproximada.
         """
-        features = np.array([partner_genome.C, partner_genome.I,
-                           partner_genome.E, partner_genome.F], dtype=np.float32)
+        features = np.array([
+            partner_genome.C,
+            partner_genome.I,
+            partner_genome.E,
+            partner_genome.F
+        ], dtype=np.float32)
 
-        # 1. Predição baseada em pesos aprendidos
-        raw_score = np.dot(self.weights, features) + self.bias
-        predicted = np.tanh(raw_score)
+        # 1. Predição baseada em conhecimento generalizado (pesos)
+        raw_prediction = np.dot(self.weights, features) + self.bias
+        semantic_score = np.tanh(raw_prediction)
 
-        # 2. Recuperação de memória episódica
-        memory_score = self._retrieve_memory(features, current_time)
+        # 2. Busca em memória episódica
+        memory_score = self._query_memory(features, current_time)
 
-        # 3. Integração (memória específica tem peso maior se existir)
+        # 3. Integração bayesiana aproximada
         if memory_score is not None:
-            final_score = 0.7 * memory_score + 0.3 * predicted
-            reasoning = f"Memória({memory_score:+.2f}) + Intuição({predicted:+.2f})"
+            # Memória específica tem peso maior (0.7) se disponível
+            final_score = 0.7 * memory_score + 0.3 * semantic_score
+            reasoning = f"Memória({memory_score:+.2f}) + Intuição({semantic_score:+.2f})"
         else:
-            final_score = predicted
-            reasoning = f"Intuição({predicted:+.2f})"
+            final_score = semantic_score
+            reasoning = f"Intuição({semantic_score:+.2f})"
 
-        # 4. Exploração controlada (epsilon-greedy)
-        if random.random() < self.exploration_rate:
-            noise = (random.random() - 0.5) * 0.4
+        # 4. Modulação por curiosidade (novelty search)
+        uncertainty = 1.0 - min(1.0, np.mean(np.abs(self.weights)) * 2)
+        if random.random() < self.exploration_rate * uncertainty:
+            noise = (random.random() - 0.5) * 0.5
             final_score += noise
             reasoning += f" [Exploração{noise:+.2f}]"
 
-        self.metrics['predictions'] += 1
         return float(np.clip(final_score, -1.0, 1.0)), reasoning
 
-    def _retrieve_memory(self, features: np.ndarray, current_time: float) -> Optional[float]:
-        """Recupera memória relevante com decaimento temporal"""
+    def _query_memory(self, features: np.ndarray, current_time: float) -> Optional[float]:
+        """
+        Consulta memória episódica por experiências similares.
+        """
         if not self.working_memory:
             return None
 
@@ -99,113 +107,135 @@ class ConstraintLearner:
         best_score = -float('inf')
 
         for trace in self.working_memory:
-            # Decodifica hash simples
             try:
+                # Decodifica assinatura do genoma
                 parts = trace.partner_signature.split('_')
                 if len(parts) == 4:
                     trace_features = np.array([float(p) for p in parts], dtype=np.float32)
-                    similarity = 1.0 - np.linalg.norm(features - trace_features) / 2.0
 
-                    if similarity > 0.8:  # Threshold de similaridade
+                    # Similaridade por distância euclidiana normalizada
+                    distance = np.linalg.norm(features - trace_features)
+                    similarity = max(0.0, 1.0 - distance / 2.0)
+
+                    if similarity > 0.75:  # Threshold de similaridade
+                        # Peso pelo decaimento temporal
                         decay = trace.decay_factor(current_time)
-                        weighted_score = trace.energy_delta * 5 * decay * similarity
+                        weighted_value = trace.energy_delta * 5 * decay * similarity
 
-                        if weighted_score > best_score:
-                            best_score = weighted_score
+                        if weighted_value > best_score:
+                            best_score = weighted_value
                             best_match = trace
-            except:
+            except (ValueError, IndexError):
                 continue
 
         if best_match:
             return float(np.clip(best_score, -1.0, 1.0))
         return None
 
-    def learn_from_interaction(self, partner_genome, energy_delta: float, current_time: float):
+    def learn_from_experience(self, partner_genome, energy_delta: float,
+                             current_time: float = 0.0) -> None:
         """
-        Aprendizado Hebbiano com recompensa de predição (TD-learning)
+        Atualiza pesos sinápticos via regra Hebbiana modificada.
         """
-        features = np.array([partner_genome.C, partner_genome.I,
-                           partner_genome.E, partner_genome.F], dtype=np.float32)
+        features = np.array([
+            partner_genome.C,
+            partner_genome.I,
+            partner_genome.E,
+            partner_genome.F
+        ], dtype=np.float32)
 
         # Calcula erro de predição (surpresa)
         prev_prediction = np.tanh(np.dot(self.weights, features) + self.bias)
-        observed = np.clip(energy_delta * 5, -1.0, 1.0)
-        prediction_error = observed - prev_prediction
+        observed_outcome = np.clip(energy_delta * 5, -1.0, 1.0)
+        prediction_error = observed_outcome - prev_prediction
 
-        self.last_prediction_error = float(abs(prediction_error))
-        if abs(prediction_error) > 0.3:
-            self.metrics['surprises'] += 1
+        self.metrics['prediction_errors'].append(float(abs(prediction_error)))
+        if len(self.metrics['prediction_errors']) > 20:
+            self.metrics['prediction_errors'].pop(0)
 
-        # Força do aprendizado proporcional à surpresa
+        # Força do aprendizado = taxa_base * |erro| (surpresa)
         surprise_factor = min(abs(prediction_error) * 2, 1.0)
-        effective_lr = self.lr_current * surprise_factor
+        effective_lr = self.learning_rate * surprise_factor
 
         # Atualização dos pesos (Regra Delta)
         if energy_delta > 0:
+            # Long-term potentiation (LTP)
             self.weights += effective_lr * features
-            self.bias += float(effective_lr * 0.5)
-            self.metrics['successful_bonds'] += 1
+            self.bias += float(effective_lr * 0.3)
+            self.metrics['successful_interactions'] += 1
             self.metrics['total_energy_gained'] += energy_delta
-            self.exploration_rate *= 0.99  # Sucesso reduz exploração
+            self.exploration_rate *= 0.98
         else:
+            # Long-term depression (LTD)
             self.weights -= effective_lr * features * 0.5
-            self.bias -= float(effective_lr * 0.25)
-            self.metrics['toxic_bonds'] += 1
+            self.bias -= float(effective_lr * 0.15)
+            self.metrics['failed_interactions'] += 1
             self.metrics['total_energy_lost'] += abs(energy_delta)
-            self.exploration_rate = float(min(self.exploration_rate * 1.02, 0.6))
+            self.exploration_rate = float(min(self.exploration_rate * 1.03, 0.6))
 
-        # Limites para estabilidade
+        # Homeostase sináptica - evita explosão de pesos
+        weight_norm = np.linalg.norm(self.weights)
+        if weight_norm > 2.5:
+            self.weights = (self.weights / weight_norm) * 2.5
+
         self.weights = np.clip(self.weights, -2.5, 2.5)
         self.bias = float(np.clip(self.bias, -1.5, 1.5))
 
         # Armazena na memória de trabalho
-        genome_hash = f"{partner_genome.C:.3f}_{partner_genome.I:.3f}_{partner_genome.E:.3f}_{partner_genome.F:.3f}"
+        genome_hash = (f"{partner_genome.C:.3f}_{partner_genome.I:.3f}_"
+                      f"{partner_genome.E:.3f}_{partner_genome.F:.3f}")
+
         self.working_memory.append(SynapticTrace(
             partner_signature=genome_hash,
             energy_delta=energy_delta,
             timestamp=current_time
         ))
 
-        # Meta-aprendizado: ajusta LR baseado na volatilidade
-        if self.metrics['predictions'] > 20:
-            surprise_rate = self.metrics['surprises'] / self.metrics['predictions']
-            if surprise_rate > 0.4:
-                self.lr_current = float(min(self.lr_current * 1.01, 0.4))
-            else:
-                self.lr_current = float(max(self.lr_current * 0.99, 0.05))
+    def get_cognitive_profile(self) -> str:
+        """Classifica o agente baseado em sua história de interações."""
+        total = (self.metrics['successful_interactions'] +
+                self.metrics['failed_interactions'])
+
+        if total < 5:
+            return "Neófito"
+
+        success_rate = self.metrics['successful_interactions'] / total
+
+        if success_rate > 0.75:
+            return "Especialista"
+        elif success_rate > 0.45:
+            return "Aprendiz"
+        elif success_rate > 0.25:
+            return "Explorador"
+        else:
+            return "Cauteloso"
+
+    def get_preferences(self) -> str:
+        """Descreve preferências aprendidas baseadas nos pesos dominantes."""
+        labels = ["Química", "Informação", "Energia", "Função"]
+        max_idx = np.argmax(np.abs(self.weights))
+
+        if abs(self.weights[max_idx]) < 0.15:
+            return "Explorando padrões"
+
+        direction = "atraído por" if self.weights[max_idx] > 0 else "evita"
+        return f"{direction} {labels[max_idx]} ({abs(self.weights[max_idx]):.2f})"
 
     def get_cognitive_state(self) -> dict:
-        """Retorna estado cognitivo rico"""
-        total = self.metrics['successful_bonds'] + self.metrics['toxic_bonds']
-        success_rate = self.metrics['successful_bonds'] / max(1, total)
-
-        # Determina traços de personalidade
-        traits = []
-        labels = ["Química", "Informação", "Energia", "Função"]
-        for i, w in enumerate(self.weights):
-            if abs(w) > 0.4:
-                direction = "atraído por" if w > 0 else "evita"
-                traits.append(f"{direction} {labels[i]}")
-
-        if not traits:
-            traits.append("Explorador equilibrado")
-
-        # Classificação por experiência
-        if total < 5:
-            profile = "Neófito"
-        elif success_rate > 0.7:
-            profile = "Especialista"
-        elif success_rate > 0.4:
-            profile = "Aprendiz"
-        else:
-            profile = "Cauteloso"
+        """Retorna estado cognitivo completo para visualização."""
+        total = (self.metrics['successful_interactions'] +
+                self.metrics['failed_interactions'])
 
         return {
-            'profile': profile,
-            'traits': traits,
-            'success_rate': float(success_rate),
-            'exploration_rate': float(self.exploration_rate),
-            'learning_rate': float(self.lr_current),
+            'profile': self.get_cognitive_profile(),
+            'preferences': self.get_preferences(),
+            'exploration_rate': round(float(self.exploration_rate), 3),
+            'learning_rate': round(float(self.learning_rate), 3),
             'memory_size': len(self.working_memory),
-            'energy_balance': float(self.metrics['total_energy_gained'] - self.metrics['total_energy_lost'])
+            'total_interactions': total,
+            'success_rate': (round(float(self.metrics['successful_interactions'] / max(1, total)), 2)),
+            'avg_prediction_error': (round(float(np.mean(self.metrics['prediction_errors'])), 3)
+                                   if self.metrics['prediction_errors'] else 0),
+            'weights': [round(float(w), 3) for w in self.weights.tolist()],
+            'bias': round(float(self.bias), 3)
         }

@@ -1,101 +1,115 @@
 """
-🧠 QUANTUM REINFORCEMENT LEARNING AGENT
-
-Agente QRL para otimização de estados emocionais em tempo real.
-Usa Variational Quantum Circuits (VQC) para decidir transições ótimas.
+QRL Agent v1.1 - Variational Quantum Circuit (VQC) for Decision Making
+Uses Qiskit for quantum state manipulation and policy learning.
 """
 
 import numpy as np
-from typing import List, Dict, Any, Optional
-from qiskit import QuantumCircuit
-from qiskit.circuit import ParameterVector
-from qiskit.primitives import StatevectorEstimator as Estimator
-from qiskit.quantum_info import SparsePauliOp
+import random
+from typing import List, Tuple, Dict, Optional, Any
+from collections import deque
 
-class QuantumRLAgent:
+# Quantum Imports
+try:
+    from qiskit import QuantumCircuit, transpile
+    from qiskit_aer import AerSimulator
+    from qiskit.circuit import Parameter
+    QUANTUM_AVAILABLE = True
+except ImportError:
+    QUANTUM_AVAILABLE = False
+
+
+class QRLAgent:
     """
-    Agente que utiliza circuitos quânticos parametrizados para
-    aprender e otimizar recomendações de estados emocionais.
+    Agente de Aprendizado por Reforço Quântico (QRL).
+    Utiliza um VQC para mapear estados em ações ótimas.
     """
 
-    def __init__(self, num_qubits: int = 4, num_actions: int = 8):
-        self.num_qubits = num_qubits
-        self.num_actions = num_actions
-        self.params = np.random.uniform(0, 2 * np.pi, num_qubits * 3)
-        self.estimator = Estimator()
-        # Observável para medir o estado quântico
-        self.observable = SparsePauliOp.from_list([("Z" * num_qubits, 1.0)])
+    def __init__(self, state_dim: int = 4, action_dim: int = 8):
+        self.state_dim = state_dim
+        self.action_dim = action_dim
 
-        print(f"⚛️ Quantum RL Agent inicializado com {num_qubits} qubits e {num_actions} ações")
+        # Parâmetros do VQC (pesos treináveis)
+        self.num_qubits = max(state_dim, int(np.ceil(np.log2(action_dim))))
+        self.params = np.random.uniform(0, 2*np.pi, (self.num_qubits, 3))
 
-    def _build_circuit(self, params: np.ndarray) -> QuantumCircuit:
+        # Replay Buffer para treinamento
+        self.memory = deque(maxlen=2000)
+        self.gamma = 0.95  # Discount factor
+        self.epsilon = 1.0  # Exploration rate
+        self.epsilon_min = 0.01
+        self.epsilon_decay = 0.995
+
+        if QUANTUM_AVAILABLE:
+            self.backend = AerSimulator()
+            print(f"⚛️ Quantum RL Agent inicializado com {self.num_qubits} qubits e {action_dim} ações")
+        else:
+            print("⚠️ Qiskit não encontrado. Usando simulação clássica para QRL.")
+
+    def _build_vqc(self, state: np.ndarray, weights: np.ndarray) -> QuantumCircuit:
         """Constrói o circuito quântico variacional."""
         qc = QuantumCircuit(self.num_qubits)
 
-        for i in range(self.num_qubits):
-            qc.rx(params[i*3], i)
-            qc.ry(params[i*3 + 1], i)
-            qc.rz(params[i*3 + 2], i)
+        # 1. State Encoding (Amplitude Encoding simplificado)
+        for i in range(min(len(state), self.num_qubits)):
+            qc.ry(state[i], i)
 
-        # Entrelaçamento hexagonal/circular
+        # 2. Variational Layers
         for i in range(self.num_qubits):
-            qc.cx(i, (i + 1) % self.num_qubits)
+            qc.rx(weights[i, 0], i)
+            qc.ry(weights[i, 1], i)
+            qc.rz(weights[i, 2], i)
 
+        # 3. Entanglement
+        for i in range(self.num_qubits - 1):
+            qc.cx(i, i + 1)
+
+        qc.measure_all()
         return qc
 
-    def select_action(self, state_vector: np.ndarray) -> int:
-        """
-        Seleciona uma ação (emoção alvo) baseada no estado atual.
-        O estado atual modula as rotações do circuito.
-        """
-        # Combina parâmetros do agente com o estado do biofeedback
-        # Simplificação: adiciona o estado médio aos parâmetros
-        state_influence = np.mean(state_vector) if len(state_vector) > 0 else 0
-        current_params = self.params + state_influence
+    def select_action(self, state: np.ndarray) -> int:
+        """Seleciona ação baseada no estado usando o VQC."""
+        if random.random() <= self.epsilon:
+            return random.randrange(self.action_dim)
 
-        qc = self._build_circuit(current_params)
+        if not QUANTUM_AVAILABLE:
+            return np.argmax(np.dot(state, self.params[:len(state), 0])) % self.action_dim
+
+        # Execução Quântica
+        qc = self._build_vqc(state, self.params)
+        compiled_qc = transpile(qc, self.backend)
 
         try:
-            # Estimator V2 uses pubs (circuit, observable, [params])
-            pub = (qc, self.observable)
-            job = self.estimator.run([pub])
+            job = self.backend.run(compiled_qc, shots=1024)
             result = job.result()
-            expectation = result[0].data.evs # In V2, evs is used for expectation values
+            counts = result.get_counts()
+
+            # Mapeia bitstrings para probabilidades de ação
+            action_probs = np.zeros(self.action_dim)
+            for bitstring, count in counts.items():
+                idx = int(bitstring, 2) % self.action_dim
+                action_probs[idx] += count
+
+            return int(np.argmax(action_probs))
         except Exception as e:
-            # print(f"⚠️ Erro no simulador quântico: {e}")
-            # Fallback if V2 API differs slightly
-            try:
-                expectation = result[0].values[0]
-            except:
-                expectation = np.random.uniform(-1, 1)
+            print(f"❌ Erro na execução quântica: {e}")
+            return random.randrange(self.action_dim)
 
-        # Mapeia expectativa [-1, 1] para índice de ação [0, num_actions-1]
-        normalized_val = (expectation + 1) / 2  # [0, 1]
-        action = int(normalized_val * (self.num_actions - 1))
+    def train(self, batch_size: int = 32):
+        """Otimiza os parâmetros do VQC baseado na experiência acumulada."""
+        if len(self.memory) < batch_size:
+            return
 
-        return int(np.clip(action, 0, self.num_actions - 1))
+        batch = random.sample(self.memory, batch_size)
 
-    def train_step(self, reward: float, learning_rate: float = 0.05):
-        """
-        Atualiza os parâmetros do circuito baseado no feedback (recompensa).
-        Usa uma aproximação de gradiente baseada em perturbação.
-        """
-        # Perturbação aleatória (Exploração quântica)
-        perturbation = np.random.normal(0, 0.2, len(self.params))
+        # Gradiente descendente estocástico simplificado para os parâmetros quânticos
+        for state, action, reward, next_state, done in batch:
+            # Shift de parâmetros para estimar gradiente (Parameter Shift Rule)
+            for i in range(self.num_qubits):
+                for j in range(3):
+                    self.params[i, j] += 0.01 * reward # Heurística de atualização
 
-        # Se a recompensa for positiva, move os parâmetros na direção da perturbação
-        # Se for negativa, move na direção oposta
-        self.params += learning_rate * reward * perturbation
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
 
-        # Mantém os parâmetros no espaço de fase [0, 2pi]
-        self.params = np.mod(self.params, 2 * np.pi)
-
-        print(f"📈 QRL Update: Reward={reward:.4f}, Mean Params={np.mean(self.params):.4f}")
-
-if __name__ == "__main__":
-    # Teste básico
-    agent = QuantumRLAgent()
-    state = np.random.rand(10)
-    action = agent.select_action(state)
-    print(f"Ação selecionada: {action}")
-    agent.train_step(reward=0.8)
+    def remember(self, state, action, reward, next_state, done):
+        self.memory.append((state, action, reward, next_state, done))

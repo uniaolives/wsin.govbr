@@ -1,145 +1,220 @@
 """
-BIO-ARKHE v3.0 - DNA e Campo Morfogenético
-Sem dependências externas para evitar circular import
+BIO-ARKHE v3.0 - DNA Quaternário e Campo Morfogenético
+Implementação standalone sem dependências externas
 """
 
 import numpy as np
 from dataclasses import dataclass
-from typing import List, Dict, Tuple, Optional, Any
-import random
+from typing import Tuple, Optional
+
 
 @dataclass
 class ArkheGenome:
-    """DNA quaternário"""
-    C: float  # Chemistry (0-1)
-    I: float  # Information (0-1)
-    E: float  # Energy (0-1)
-    F: float  # Function (0-1)
+    """
+    DNA digital com 4 dimensões fundamentais:
+    C: Chemistry (Química) - Compatibilidade estrutural
+    I: Information (Informação) - Capacidade de processamento
+    E: Energy (Energia) - Metabolismo e velocidade
+    F: Function (Função) - Especialização e sinalização
+    """
+    C: float
+    I: float
+    E: float
+    F: float
 
     def to_vector(self) -> np.ndarray:
+        """Converte genoma para vetor numpy."""
         return np.array([self.C, self.I, self.E, self.F], dtype=np.float32)
 
+    def mutate(self, rate: float = 0.1) -> 'ArkheGenome':
+        """Cria mutação gaussiana do genoma."""
+        def clamp(x):
+            return max(0.05, min(0.95, x))
+
+        return ArkheGenome(
+            C=clamp(self.C + np.random.normal(0, rate)),
+            I=clamp(self.I + np.random.normal(0, rate)),
+            E=clamp(self.E + np.random.normal(0, rate)),
+            F=clamp(self.F + np.random.normal(0, rate))
+        )
+
+
 class MorphogeneticField:
-    """Campo escalar 3D com difusão otimizada"""
+    """
+    Campo escalar 3D que permeia o espaço da simulação.
+    Implementa difusão de sinais metabólicos e gradientes químicos.
+    """
 
     def __init__(self, size: Tuple[int, int, int] = (100, 100, 100)):
         self.size = size
         self.grid = np.zeros(size, dtype=np.float32)
-        # Kernel de difusão 3x3x3
-        self.kernel = self._create_kernel()
 
-    def _create_kernel(self) -> np.ndarray:
-        k = np.zeros((3, 3, 3), dtype=np.float32)
-        k[1, 1, 1] = 0.4  # Centro
-        # Faces
-        k[0, 1, 1] = k[2, 1, 1] = k[1, 0, 1] = k[1, 2, 1] = k[1, 1, 0] = k[1, 1, 2] = 0.1
-        return k
+        # Constantes de difusão
+        self.decay_rate = 0.96
+        self.diffusion_rate = 0.1
 
-    def diffuse(self):
-        """Difusão manual sem scipy (mais lento mas sem dependência)"""
-        new_grid = np.zeros_like(self.grid)
-        sx, sy, sz = self.size
+    def add_signal(self, x: float, y: float, z: float, strength: float) -> None:
+        """Adiciona sinal em coordenadas específicas."""
+        ix, iy, iz = int(x), int(y), int(z)
 
-        # Convolução manual nas bordas internas (vetorizada com slices para performance)
-        new_grid[1:-1, 1:-1, 1:-1] = (
-            self.grid[1:-1, 1:-1, 1:-1] * 0.4 +
-            self.grid[0:-2, 1:-1, 1:-1] * 0.1 + self.grid[2:, 1:-1, 1:-1] * 0.1 +
-            self.grid[1:-1, 0:-2, 1:-1] * 0.1 + self.grid[1:-1, 2:, 1:-1] * 0.1 +
-            self.grid[1:-1, 1:-1, 0:-2] * 0.1 + self.grid[1:-1, 1:-1, 2:] * 0.1
-        )
+        if (0 <= ix < self.size[0] and
+            0 <= iy < self.size[1] and
+            0 <= iz < self.size[2]):
+            self.grid[ix, iy, iz] += strength
 
-        self.grid = new_grid * 0.96  # Decaimento
+    def get_signal_at(self, x: float, y: float, z: float) -> float:
+        """Retorna intensidade do sinal em posição."""
+        ix, iy, iz = int(x), int(y), int(z)
 
-    def add_signal(self, position: np.ndarray, strength: float):
-        x, y, z = position.astype(int)
-        if 0 <= x < self.size[0] and 0 <= y < self.size[1] and 0 <= z < self.size[2]:
-            self.grid[x, y, z] += strength
-
-    def get_signal_at(self, position: np.ndarray) -> float:
-        x, y, z = position.astype(int)
-        if 0 <= x < self.size[0] and 0 <= y < self.size[1] and 0 <= z < self.size[2]:
-            return float(self.grid[x, y, z])
+        if (0 <= ix < self.size[0] and
+            0 <= iy < self.size[1] and
+            0 <= iz < self.size[2]):
+            return float(self.grid[ix, iy, iz])
         return 0.0
 
-    def get_gradient(self, position: np.ndarray) -> np.ndarray:
-        x, y, z = position.astype(int)
-        x = max(1, min(self.size[0]-2, x))
-        y = max(1, min(self.size[1]-2, y))
-        z = max(1, min(self.size[2]-2, z))
+    def get_gradient(self, x: float, y: float, z: float) -> np.ndarray:
+        """
+        Calcula gradiente do campo por diferenças finitas.
+        Usado para quimiotaxia (movimento em direção a sinais).
+        """
+        ix, iy, iz = int(x), int(y), int(z)
+
+        # Garante limites para cálculo do gradiente
+        ix = max(1, min(self.size[0] - 2, ix))
+        iy = max(1, min(self.size[1] - 2, iy))
+        iz = max(1, min(self.size[2] - 2, iz))
 
         grad = np.array([
-            (self.grid[x+1, y, z] - self.grid[x-1, y, z]) / 2.0,
-            (self.grid[x, y+1, z] - self.grid[x, y-1, z]) / 2.0,
-            (self.grid[x, y, z+1] - self.grid[x, y, z-1]) / 2.0
+            (self.grid[ix + 1, iy, iz] - self.grid[ix - 1, iy, iz]) / 2.0,
+            (self.grid[ix, iy + 1, iz] - self.grid[ix, iy - 1, iz]) / 2.0,
+            (self.grid[ix, iy, iz + 1] - self.grid[ix, iy, iz - 1]) / 2.0
         ], dtype=np.float32)
 
+        # Normaliza
         norm = np.linalg.norm(grad)
-        return grad / norm if norm > 1e-6 else np.random.randn(3).astype(np.float32) * 0.1
+        if norm > 1e-6:
+            return grad / norm
+        return np.random.randn(3).astype(np.float32) * 0.1
+
+    def diffuse_and_decay(self) -> None:
+        """
+        Aplica difusão isotrópica e decaimento temporal.
+        Implementação vetorizada usando numpy (sem scipy).
+        """
+        # Difusão via rolling - espalha para 6 vizinhos ortogonais
+        neighbors = (
+            np.roll(self.grid, 1, axis=0) + np.roll(self.grid, -1, axis=0) +
+            np.roll(self.grid, 1, axis=1) + np.roll(self.grid, -1, axis=1) +
+            np.roll(self.grid, 1, axis=2) + np.roll(self.grid, -1, axis=2)
+        )
+
+        # Atualização: conservação + difusão + decaimento
+        self.grid = (
+            self.grid * (1 - 6 * self.diffusion_rate) +
+            neighbors * self.diffusion_rate
+        ) * self.decay_rate
+
 
 class BioAgent:
-    """Agente autônomo com cognição embarcada"""
+    """
+    Agente autônomo com corpo físico e cognição embarcada.
+    """
 
-    def __init__(self, agent_id: int, position: np.ndarray, genome: ArkheGenome):
+    def __init__(self, agent_id: int, x: float, y: float, z: float,
+                 genome: ArkheGenome):
         self.id = agent_id
-        self.position = position.astype(np.float32)
+
+        # Estado físico
+        self.position = np.array([x, y, z], dtype=np.float32)
         self.velocity = np.zeros(3, dtype=np.float32)
         self.genome = genome
 
-        # Estado fisiológico
-        self.health = 0.5 + genome.E * 0.5
+        # Metabolismo
+        self.health = 0.7 + genome.E * 0.3  # Energia inicial baseada no gene E
         self.age = 0.0
         self.alive = True
 
-        # Conectividade social
-        self.neighbors: List[int] = []
-        self.bond_strengths: Dict[int, float] = {}
+        # Conectividade social (máximo 6 conexões - número de coordenação)
+        self.connections: list = []
+        self.bond_strengths: dict = {}
 
         # Cérebro (inicializado externamente)
         self.brain = None
+
+        # Estado comportamental
         self.state = "exploring"
         self.last_decision = ""
 
-    def attach_brain(self, brain):
+    def set_brain(self, brain) -> None:
+        """Conecta o sistema cognitivo."""
         self.brain = brain
 
-    def update_physics(self, dt: float, field: MorphogeneticField):
-        """Atualização física com metabolismo"""
+    def is_alive(self) -> bool:
+        return self.alive and self.health > 0
+
+    def get_position(self) -> Tuple[float, float, float]:
+        return (float(self.position[0]), float(self.position[1]), float(self.position[2]))
+
+    def apply_physics(self, dt: float, field_size: Tuple[int, ...]) -> None:
+        """
+        Atualiza física do agente com:
+        - Integração de velocidade
+        - Fricção viscosa
+        - Metabolismo basal
+        - Condições de contorno (bounce)
+        """
         # Atualiza posição
         self.position += self.velocity * dt
 
-        # Limites do campo (reflexão suave)
-        for i in range(3):
-            if self.position[i] < 0:
-                self.position[i] = 0
-                self.velocity[i] *= -0.5
-            elif self.position[i] >= field.size[i]:
-                self.position[i] = field.size[i] - 1
-                self.velocity[i] *= -0.5
-
-        # Fricção
+        # Fricção (arrasto do meio)
         self.velocity *= 0.92
 
-        # Metabolismo
+        # Metabolismo: custo de movimento + manutenção basal
         speed = np.linalg.norm(self.velocity)
-        movement_cost = speed * speed * 0.001
-        base_cost = 0.0003 * (1.1 - self.genome.E)
+        movement_cost = float(speed * speed * 0.001)  # Custo quadrático
+        base_cost = 0.0005 * (1.1 - self.genome.E)
         self.health -= (movement_cost + base_cost) * dt
+
+        # Envelhecimento
         self.age += dt
 
-        if self.health <= 0:
+        # Condições de contorno - reflexão suave nas bordas
+        for i, (pos, limit) in enumerate(zip(self.position, field_size)):
+            if pos <= 0:
+                self.position[i] = 0.1
+                self.velocity[i] = abs(self.velocity[i]) * 0.5
+            elif pos >= limit - 1:
+                self.position[i] = limit - 1.1
+                self.velocity[i] = -abs(self.velocity[i]) * 0.5
+
+        # Morte
+        if self.health <= 0 or self.age > 1000:
             self.alive = False
 
-    def form_bond(self, other: 'BioAgent', strength: float = 0.5):
-        """Forma conexão simbiótica"""
-        if other.id not in self.neighbors and len(self.neighbors) < 6:
-            self.neighbors.append(other.id)
-            self.bond_strengths[other.id] = strength
+    def form_bond(self, other_agent, strength: float = 0.5) -> bool:
+        """
+        Tenta formar conexão simbiótica com outro agente.
+        Retorna True se a conexão foi estabelecida.
+        """
+        # Verifica limites de conectividade (máximo 6 vizinhos)
+        if (len(self.connections) >= 6 or
+            len(other_agent.connections) >= 6):
+            return False
 
-        if self.id not in other.neighbors and len(other.neighbors) < 6:
-            other.neighbors.append(self.id)
-            other.bond_strengths[self.id] = strength
+        if other_agent.id not in self.connections:
+            self.connections.append(other_agent.id)
+            self.bond_strengths[other_agent.id] = strength
 
-    def break_bond(self, other_id: int):
-        if other_id in self.neighbors:
-            self.neighbors.remove(other_id)
+            # Conexão recíproca
+            if self.id not in other_agent.connections:
+                other_agent.connections.append(self.id)
+                other_agent.bond_strengths[self.id] = strength
+
+            return True
+        return False
+
+    def break_bond(self, other_id: int) -> None:
+        """Rompe conexão com outro agente."""
+        if other_id in self.connections:
+            self.connections.remove(other_id)
             self.bond_strengths.pop(other_id, None)

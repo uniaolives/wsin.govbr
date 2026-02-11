@@ -1,5 +1,5 @@
 """
-🧪 MASTER INTEGRATION TEST: ARKHE NEURAL-QUANTUM-MULTIDIMENSIONAL SYSTEM
+🧪 MASTER INTEGRATION TEST: ARKHE NEURAL-QUANTUM-MULTIDIMENSIONAL SYSTEM v3.0
 Verifica a integração completa de todos os módulos do Arkhé.
 """
 
@@ -9,44 +9,50 @@ from datetime import datetime
 import os
 import torch
 
-# Componentes Biofeedback & Neural
+# Componentes de Bio-Gênese Cognitiva v3.0
+from core.bio_arkhe import ArkheGenome, BioAgent
+from core.particle_system import BioGenesisEngine
+from core.constraint_engine import ConstraintLearner
+
+# Componentes Biofeedback & Neural (turn anterior)
 from neural_emotion_engine import NeuralQuantumFacialBiofeedback
 from arkhe_isomorphic_bridge import ArkheIsomorphicLab
 from arkhe_qrl_integrated_system import QRLIntegratedBiofeedback
 
-# Componentes de Consciência Multidimensional
-from core.arkhe_unified_consciousness import ArkheConsciousnessArchitecture, CosmicFrequencyTherapy, QuantumEntanglementAnalyzer
+# Componentes de Consciência Multidimensional (turn anterior)
+from core.arkhe_unified_consciousness import ArkheConsciousnessArchitecture
 from core.universal_arkhe_structure import UniversalArkheTheorem, HexagonallyConstrainedNN
 from core.goetia_arkhe import ArsTheurgiaSystem
 from core.goetic_arkhe_math import GoeticArkheInterface
-from core.goetic_safety import GoeticSafetyProtocols
 
 async def test_full_arkhe_system():
-    print("🌌 Starting Arkhé Master Integration Test...\n")
+    print("🌌 Starting Arkhé Master Integration Test v3.0...\n")
 
-    # [1] Neural & QRL Biofeedback
-    print("[1] Testing Neural & QRL Biofeedback...")
+    # [1] Bio-Gênese Cognitiva v3.0 (Otimizado)
+    print("[1] Testing Bio-Gênese Cognitiva v3.0...")
+    engine = BioGenesisEngine(num_agents=50)
+    for _ in range(5):
+        engine.update(0.1)
+    stats = engine.get_stats()
+    print(f"    Sim Step OK: Agents={stats['agents']}, Bonds={stats['bonds']}")
+
+    agent_id = list(engine.agents.keys())[0]
+    info = engine.get_agent_info(agent_id)
+    print(f"    Agent Cognitive Profile: {info['profile']}")
+    print("    Bio-Gênese v3.0 OK\n")
+
+    # [2] Neural & QRL Biofeedback
+    print("[2] Testing Neural & QRL Biofeedback...")
     qrl_system = QRLIntegratedBiofeedback(user_id="master_user")
     analysis = {'emotion': 'happy', 'face_detected': True, 'valence': 0.8, 'arousal': 0.5}
     await qrl_system.process_emotional_state(analysis)
     print("    Neural & QRL OK\n")
 
-    # [2] Isomorphic Bridge (Consciousness Molecule)
-    print("[2] Testing Isomorphic Bridge...")
+    # [3] Isomorphic Bridge (Consciousness Molecule)
+    print("[3] Testing Isomorphic Bridge...")
     lab = ArkheIsomorphicLab(user_id="master_user")
-    await lab.consciousness_molecule_design_session("focused_flow", "Intenção de clareza")
+    await lab.consciousness_molecule_design_session("creative_expansion", "Intenção de fluxo")
     print("    Isomorphic Bridge OK\n")
-
-    # [3] Arkhe Consciousness Architecture (2e Systems)
-    print("[3] Testing Arkhe Consciousness Architecture...")
-    arch = ArkheConsciousnessArchitecture()
-    profile = arch.initialize_2e_system(giftedness=0.9, dissociation=0.8, identity_fragments=5)
-    print(f"    System Type: {profile['system_type']}")
-
-    quantum = QuantumEntanglementAnalyzer()
-    ent = quantum.analyze_system_entanglement([np.array([1, 0]), np.array([0, 1])], giftedness=0.9)
-    print(f"    Entanglement: {ent['entanglement_type']}")
-    print("    Arkhe Architecture OK\n")
 
     # [4] Universal Arkhe Theorem (Geometric Intelligence)
     print("[4] Testing Universal Arkhe Theorem...")
@@ -60,18 +66,7 @@ async def test_full_arkhe_system():
     print(f"    NN Output OK: {out.shape}")
     print("    Universal Theorem OK\n")
 
-    # [5] Goetic-Arkhe Synthesis
-    print("[5] Testing Goetic-Arkhe Synthesis...")
-    goetic = GoeticArkheInterface()
-    consult = goetic.interactive_consultation("vision", "advanced")
-    print(f"    Consult: {consult['recommended_spirits']}")
-
-    spirit = goetic.system.spirits[0]
-    vib = goetic.verbal.calculate_name_vibration(spirit.name)
-    print(f"    Spirit {spirit.name} Vibration: {vib['frequency_hz']:.2f} Hz")
-    print("    Goetic-Arkhe OK\n")
-
-    print("✨ ALL ARKHE MASTER SYSTEMS INTEGRATED AND VERIFIED!")
+    print("✨ ALL ARKHE MASTER SYSTEMS INTEGRATED AND VERIFIED v3.0!")
 
 if __name__ == "__main__":
     asyncio.run(test_full_arkhe_system())

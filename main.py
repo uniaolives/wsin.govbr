@@ -1,72 +1,92 @@
-#!/usr/bin/env python3
 """
-MAIN - Ponto de entrada do Bio-Gênese Cognitivo v3.0
-Orquestra a simulação, a visualização e a prontidão WebMCP.
+ARKHÉ MASTER SYSTEM v3.0 - Entry Point
+Sistema Integrado de Biofeedback Quântico, Bio-Gênese e Design Molecular.
 """
 
 import sys
 import os
-import numpy as np
-
-# Adiciona diretório raiz ao path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import asyncio
 
 def check_dependencies():
-    try:
-        import numpy
-        import pyglet
-        return True
-    except ImportError as e:
-        print(f"Erro: Dependência faltando: {e}")
+    """Verifica se todas as dependências críticas estão instaladas."""
+    print("🔍 Verificando ecossistema Arkhé...")
+
+    missing = []
+
+    # Lista de pacotes necessários
+    packages = {
+        'numpy': 'numpy',
+        'torch': 'torch',
+        'qiskit': 'qiskit',
+        'cv2': 'opencv-python',
+        'mediapipe': 'mediapipe',
+        'sklearn': 'scikit-learn',
+        'scipy': 'scipy',
+        'pyglet': 'pyglet',
+        'OpenGL': 'PyOpenGL'
+    }
+
+    for module, package in packages.items():
+        try:
+            __import__(module)
+            print(f"  [OK] {module}")
+        except ImportError:
+            print(f"  [ERRO] {module} não encontrado.")
+            missing.append(package)
+
+    if missing:
+        print("\n❌ Faltam dependências. Por favor, execute:")
+        print(f"pip install {' '.join(missing)}")
         return False
 
-def run_headless(engine, steps=100):
-    print(f"Executando simulação Headless ({steps} passos)...")
-    for i in range(steps + 1):
-        engine.update(0.1)
-        if i % 25 == 0:
-            stats = engine.get_stats()
-            print(f"Passo {i}: Agentes={stats['agents']}, Tempo={stats['time']:.1f}, Vínculos={stats['bonds']}")
-    print("Simulação concluída.")
+    print("✅ Todas as dependências verificadas.\n")
+    return True
 
-def main():
-    print("=" * 70)
-    print("  BIO-GÊNESE COGNITIVA v3.0 - Sovereign Arkhe(n) Manifold")
-    print("=" * 70)
-
+async def start_system():
+    """Inicia o sistema Arkhé."""
     if not check_dependencies():
-        print("Instale as dependências com: pip install numpy pyglet")
-        sys.exit(1)
+        return
 
-    from core.particle_system import BioGenesisEngine
-    from gui.view_3d import BioGenesisViewer
-    from web_mcp_interface import generate_webmcp_html
+    print("="*60)
+    print("             ARKHÉ MASTER SYSTEM v3.0")
+    print("         'The Verbe becomes Molecule and Soul'")
+    print("="*60)
 
-    # 1. Gera interface WebMCP para agentes AI
-    with open("webmcp_interface.html", "w") as f:
-        f.write(generate_webmcp_html())
-    print("✓ Interface WebMCP gerada (webmcp_interface.html)")
+    print("\nEscolha o módulo para iniciar:")
+    print("1. Hypercore Demo (Sistema Total Integrado)")
+    print("2. Biofeedback Quântico (Neural + QRL)")
+    print("3. Laboratório Isomórfico (Design Molecular)")
+    print("4. Bio-Gênese Simulação (Apenas Simulação)")
+    print("5. Sair")
 
-    # 2. Inicializa o motor
-    engine = BioGenesisEngine(num_agents=300)
-    print("✓ População inicial gerada (3 tribos)")
+    try:
+        choice = input("\nSeleção > ")
 
-    # 3. Decide modo de execução
-    if os.environ.get('DISPLAY') or sys.platform == "darwin" or sys.platform == "win32":
-        print("✓ Iniciando visualizador 3D...")
-        try:
+        if choice == '1':
+            from hypercore_demo import run_hypercore_simulation
+            await run_hypercore_simulation()
+        elif choice == '2':
+            from arkhe_qrl_integrated_system import main_qrl
+            await main_qrl()
+        elif choice == '3':
+            from arkhe_isomorphic_bridge import arkhe_isomorphic_demo
+            await arkhe_isomorphic_demo()
+        elif choice == '4':
+            print("Iniciando simulação 3D...")
+            from core.particle_system import BioGenesisEngine
             from gui.view_3d import BioGenesisViewer
-            # Como BioGenesisViewer cria sua própria engine por padrão,
-            # aqui chamamos a função main do view_3d ou instanciamos.
-            # No v3.0 de view_3d.py, main() chama pyglet.app.run().
             import pyglet
-            window = BioGenesisViewer()
+
+            engine = BioGenesisEngine(num_agents=200)
+            viewer = BioGenesisViewer(engine)
             pyglet.app.run()
-        except Exception as e:
-            print(f"Aviso: Falha ao iniciar interface gráfica: {e}")
-            run_headless(engine)
-    else:
-        run_headless(engine)
+        else:
+            print("Encerrando.")
+
+    except Exception as e:
+        print(f"\n❌ Erro crítico no sistema: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(start_system())
