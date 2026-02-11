@@ -1,175 +1,138 @@
 """
-BIO-ARKHE: Active Component Assembly Architecture
-Implementação dos 5 Princípios Biológicos de Inteligência.
+BIO-ARKHE: O Protocolo de Vida Digital
+Implementação dos 5 Princípios Biológicos de Inteligência
 """
 
 import numpy as np
-from dataclasses import dataclass, field
-from typing import List, Tuple, Dict, Optional, Any
+from dataclasses import dataclass
+from typing import List, Dict, Tuple, Optional, Any
+import random
 from .constraint_engine import ConstraintLearner, ArkheGenome
 
-# Constantes de Vida
-MAX_NEIGHBORS = 6  # Simetria Hexagonal (Packing eficiente)
-SIGNAL_DECAY = 0.95 # O sinal enfraquece com a distância
-ASSEMBLY_THRESHOLD = 0.8 # Afinidade necessária para ligação
+# Constantes Fundamentais
+MAX_NEIGHBORS = 6
+SIGNAL_DECAY = 0.95
+ASSEMBLY_THRESHOLD = 0.8
 
 class MorphogeneticField:
-    """
-    O Meio Ambiente Ativo.
-    Mantém o mapa de 'cheiros' (sinais) que guia os agentes.
-    """
+    """Campo Morfogenético - O Meio Ambiente Inteligente"""
+
     def __init__(self, size=(100, 100, 100)):
         self.size = size
-        # Grid escalar para sinalização
         self.signal_grid = np.zeros(size, dtype=np.float32)
-
-    def update_field(self, agents: List['BioAgent']):
-        """
-        Atualiza o campo baseado na emissão (F) de todos os agentes.
-        Simula difusão e decaimento.
-        """
-        # Decaimento natural (entropia)
-        self.signal_grid *= SIGNAL_DECAY
-
-        # Agentes emitem sinal na sua posição
-        for agent in agents:
-            if agent.health > 0:
-                # Normaliza posição para o tamanho do grid (0 a size-1)
-                pos = agent.position.astype(int)
-                x, y, z = pos
-
-                # Verifica limites
-                if 0 <= x < self.size[0] and 0 <= y < self.size[1] and 0 <= z < self.size[2]:
-                    # A força do sinal é baseada na Função (F) e Energia (E)
-                    emission = agent.genome.F * agent.genome.E * agent.health
-                    self.signal_grid[x, y, z] += emission
+        self.signal_history = []
 
     def get_local_gradient(self, position: np.ndarray) -> np.ndarray:
-        """Calcula gradiente local do campo de sinal"""
         x, y, z = position.astype(int)
-
-        # Garante que estamos dentro dos limites
         x = max(1, min(self.size[0] - 2, x))
         y = max(1, min(self.size[1] - 2, y))
         z = max(1, min(self.size[2] - 2, z))
 
-        # Calcula gradiente usando diferenças finitas
         dx = (self.signal_grid[x+1, y, z] - self.signal_grid[x-1, y, z]) / 2.0
         dy = (self.signal_grid[x, y+1, z] - self.signal_grid[x, y-1, z]) / 2.0
         dz = (self.signal_grid[x, y, z+1] - self.signal_grid[x, y, z-1]) / 2.0
 
         gradient = np.array([dx, dy, dz], dtype=np.float32)
-
-        # Normaliza se não for zero
         norm = np.linalg.norm(gradient)
-        if norm > 1e-6:
-            gradient = gradient / norm
-
-        return gradient
+        return gradient / norm if norm > 1e-6 else np.zeros(3, dtype=np.float32)
 
     def get_signal_at(self, position: np.ndarray) -> float:
-        """Obtém valor do sinal em posição específica"""
         x, y, z = position.astype(int)
         if 0 <= x < self.size[0] and 0 <= y < self.size[1] and 0 <= z < self.size[2]:
-            return self.signal_grid[x, y, z]
+            return float(self.signal_grid[x, y, z])
         return 0.0
 
     def _diffuse_signal(self):
-        """Aplica difusão simples ao campo de sinal"""
-        # Simplificação: cada célula compartilha sinal com vizinhos
-        # Em uma implementação real usaríamos algo mais eficiente
-        pass # Por enquanto, a difusão está embutida na emissão da vizinhança no motor
+        # Difusão volumétrica simplificada
+        self.signal_grid *= SIGNAL_DECAY
+        # Em produção, usaria scipy.ndimage.gaussian_filter
 
 class BioAgent:
-    """
-    A Célula Autônoma.
-    """
+    """Célula Autônoma com Cérebro Hebbiano Incorporado"""
+
     def __init__(self, id: int, position: np.ndarray, genome: ArkheGenome, velocity: np.ndarray = None):
         self.id = id
         self.position = position.astype(np.float32)
         self.velocity = velocity if velocity is not None else np.zeros(3, dtype=np.float32)
         self.genome = genome
 
-        # Estado interno
+        # Estado físico
         self.neighbors: List[int] = []
         self.health = 1.0
-        self.prev_health = 1.0
         self.age = 0
+        self.prev_health = 1.0
 
-        # Memória de curto prazo
-        self.memory: List[Tuple[np.ndarray, float]] = []
-        self.memory_capacity = max(3, int(genome.I * 10))
+        # Cérebro Hebbiano
+        lr = 0.05 + (self.genome.I * 0.2)
+        self.brain = ConstraintLearner(agent_id=id, learning_rate=lr)
 
-        # Motor de Descoberta de Restrições (Cérebro)
-        lr = 0.01 + (self.genome.I * 0.1)
-        self.brain = ConstraintLearner(learning_rate=lr)
+        # Comportamento
+        self.mood = "curious"
+        self.last_action = "none"
+        self.decision_reasoning = ""
 
-    def sense_environment(self, field: MorphogeneticField) -> Dict[str, Any]:
-        """Coleta informações do ambiente"""
+    def perceive_environment(self, field: MorphogeneticField) -> Dict[str, Any]:
         signal = field.get_signal_at(self.position)
         gradient = field.get_local_gradient(self.position)
+        return {'signal_strength': signal, 'signal_gradient': gradient}
 
-        # Armazena na memória
-        self.memory.append((self.position.copy(), signal))
-        if len(self.memory) > self.memory_capacity:
-            self.memory.pop(0)
+    def decide_movement(self, sensory_data: Dict[str, Any], other_agents: Dict[int, 'BioAgent']) -> np.ndarray:
+        gradient = sensory_data['signal_gradient']
 
-        return {
-            'signal': signal,
-            'gradient': gradient,
-            'memory': self.memory.copy()
-        }
+        if self.mood == "social" or self.genome.C > 0.7:
+            social_vector = self._calculate_social_vector(other_agents)
+            if np.linalg.norm(social_vector) > 0.1:
+                combined = gradient * 0.3 + social_vector * 0.7
+                norm = np.linalg.norm(combined)
+                if norm > 1e-6: combined /= norm
+                self.last_action = "seeking_social"
+                return combined * self.genome.E
 
-    def decide_action(self, sensory_data: Dict[str, Any], all_agents: Dict[int, 'BioAgent']) -> np.ndarray:
-        """Decide ação baseada em percepção e genoma"""
-        gradient = sensory_data['gradient']
+        if np.linalg.norm(gradient) > 0.1:
+            self.last_action = "following_gradient"
+            return gradient * self.genome.E
+        else:
+            random_dir = np.random.randn(3).astype(np.float32)
+            norm = np.linalg.norm(random_dir)
+            if norm > 1e-6: random_dir /= norm
+            self.last_action = "exploring"
+            return random_dir * self.genome.E * 0.5
 
-        # Comportamento baseado no genoma
-        if self.genome.C > 0.7:  # Social
-            # Busca outros agentes próximos
-            avg_pos = np.zeros(3, dtype=np.float32)
-            count = 0
-            # Amostra para performance
-            for other_id in list(all_agents.keys())[:20]:
-                if other_id != self.id:
-                    other = all_agents[other_id]
-                    dist = np.linalg.norm(other.position - self.position)
-                    if dist < 20:
-                        avg_pos += other.position
-                        count += 1
+    def _calculate_social_vector(self, other_agents: Dict[int, 'BioAgent']) -> np.ndarray:
+        social_vector = np.zeros(3, dtype=np.float32)
+        count = 0
+        # Amostra limitada para performance
+        potential_ids = list(other_agents.keys())
+        sample_ids = random.sample(potential_ids, min(len(potential_ids), 20))
 
-            if count > 0:
-                social_vector = (avg_pos / count - self.position)
-                social_norm = np.linalg.norm(social_vector)
-                if social_norm > 1e-6:
-                    social_vector /= social_norm
-                gradient = gradient * 0.3 + social_vector * 0.7
+        for oid in sample_ids:
+            if oid == self.id: continue
+            other = other_agents[oid]
+            diff = other.position - self.position
+            dist = np.linalg.norm(diff)
+            if 0 < dist < 20.0:
+                score, _ = self.brain.evaluate_partner(other.genome, oid)
+                if score > 0.1:
+                    social_vector += (diff / dist) * min(score, 1.0)
+                    count += 1
+        return social_vector / count if count > 0 else social_vector
 
-        elif self.genome.F > 0.6:  # Explorador
-            if np.linalg.norm(gradient) < 0.1:
-                random_dir = np.random.randn(3).astype(np.float32)
-                gradient = random_dir / (np.linalg.norm(random_dir) + 1e-6)
+    def evaluate_connection(self, partner: 'BioAgent') -> Tuple[bool, str]:
+        score, reasoning = self.brain.evaluate_partner(partner.genome, partner.id)
+        threshold = 0.0
+        if self.health < 0.3: threshold = -0.3
+        elif self.brain.successful_bonds > 5: threshold = 0.2
+        return score > threshold, reasoning
 
-        # Modifica pela energia
-        action = gradient * self.genome.E
-        return action
-
-    def update_state(self, action: np.ndarray, dt: float):
-        """Atualiza estado físico do agente"""
-        self.velocity = self.velocity * 0.85 + action * 0.15
-
+    def update_physics(self, dt: float):
         speed = np.linalg.norm(self.velocity)
         max_speed = self.genome.E * 3.0
-        if speed > max_speed:
-            self.velocity = self.velocity / speed * max_speed
+        if speed > max_speed: self.velocity = self.velocity / speed * max_speed
 
-        self.position += self.velocity * dt * 10.0
+        self.position += self.velocity * dt
+        self.position = np.clip(self.position, 0, 99)
         self.age += dt
+        self.health -= 0.0005 * (1.0 - self.genome.E)
 
-    def sense_and_act(self, field: MorphogeneticField, all_agents: Dict[int, 'BioAgent']):
-        """
-        Atalho para o ciclo completo (usado pelo motor simplificado).
-        """
-        data = self.sense_environment(field)
-        action = self.decide_action(data, all_agents)
-        self.update_state(action, 0.1) # dt fixo para simplicidade
+        if self.health > 0.8: self.mood = "social" if self.genome.C > 0.5 else "curious"
+        elif self.health < 0.3: self.mood = "avoidant"
