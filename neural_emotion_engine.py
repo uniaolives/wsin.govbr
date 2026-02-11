@@ -249,6 +249,12 @@ class NeuralQuantumAnalyzer(QuantumFacialAnalyzer):
     def __init__(self, user_id: str = "default_user"):
         super().__init__(); self.user_profile = UserNeuralProfile(user_id=user_id)
         self.current_sequence = NeuralFacialSequence()
+    def analyze_frame_neural(self, frame: np.ndarray) -> Dict[str, Any]:
+        analysis = self.analyze_frame(frame)
+        if analysis['face_detected']:
+            pred = self.user_profile.predict_biochemical_from_sequence([frame])
+            analysis['biochemical_prediction'] = pred
+        return analysis
     async def process_emotional_state_with_neural(self, analysis: Dict) -> Optional[VerbalBioCascade]:
         self.current_sequence.frames.append(np.zeros((100, 100, 3), dtype=np.uint8))
         self.current_sequence.emotions.append(analysis.get('emotion', 'neutral'))

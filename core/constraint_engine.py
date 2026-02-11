@@ -63,6 +63,15 @@ class ConstraintLearner:
     def evaluate_partner(self, partner_genome, current_time: float = 0.0) -> Tuple[float, str]:
         """
         Avalia um parceiro potencial usando integração bayesiana aproximada.
+
+        Combina:
+        1. Predição baseada em pesos sinápticos (memória semântica)
+        2. Recuperação de memória episódica específica
+        3. Componente de exploração-curiosidade
+
+        Returns:
+            score: Valor entre -1.0 (evitar) e 1.0 (aproximar)
+            reasoning: String explicativa da decisão
         """
         features = np.array([
             partner_genome.C,
@@ -88,17 +97,19 @@ class ConstraintLearner:
             reasoning = f"Intuição({semantic_score:+.2f})"
 
         # 4. Modulação por curiosidade (novelty search)
+        # Agentes inexperientes exploram mais
         uncertainty = 1.0 - min(1.0, np.mean(np.abs(self.weights)) * 2)
         if random.random() < self.exploration_rate * uncertainty:
             noise = (random.random() - 0.5) * 0.5
             final_score += noise
             reasoning += f" [Exploração{noise:+.2f}]"
 
-        return float(np.clip(final_score, -1.0, 1.0)), reasoning
+        return np.clip(final_score, -1.0, 1.0), reasoning
 
     def _query_memory(self, features: np.ndarray, current_time: float) -> Optional[float]:
         """
         Consulta memória episódica por experiências similares.
+        Usa decaimento temporal - memórias recentes têm mais peso.
         """
         if not self.working_memory:
             return None
@@ -129,13 +140,18 @@ class ConstraintLearner:
                 continue
 
         if best_match:
-            return float(np.clip(best_score, -1.0, 1.0))
+            return np.clip(best_score, -1.0, 1.0)
         return None
 
     def learn_from_experience(self, partner_genome, energy_delta: float,
                              current_time: float = 0.0) -> None:
         """
         Atualiza pesos sinápticos via regra Hebbiana modificada.
+
+        Implementa TD-learning simplificado:
+        - Reforço positivo (LTP) quando energia aumenta
+        - Inibição (LTD) quando energia diminui
+        - Magnitude do aprendizado proporcional à surpresa (erro de predição)
         """
         features = np.array([
             partner_genome.C,
@@ -149,7 +165,7 @@ class ConstraintLearner:
         observed_outcome = np.clip(energy_delta * 5, -1.0, 1.0)
         prediction_error = observed_outcome - prev_prediction
 
-        self.metrics['prediction_errors'].append(float(abs(prediction_error)))
+        self.metrics['prediction_errors'].append(abs(prediction_error))
         if len(self.metrics['prediction_errors']) > 20:
             self.metrics['prediction_errors'].pop(0)
 
@@ -161,17 +177,21 @@ class ConstraintLearner:
         if energy_delta > 0:
             # Long-term potentiation (LTP)
             self.weights += effective_lr * features
-            self.bias += float(effective_lr * 0.3)
+            self.bias += effective_lr * 0.3
             self.metrics['successful_interactions'] += 1
             self.metrics['total_energy_gained'] += energy_delta
+
+            # Sucesso reduz exploração (exploitation)
             self.exploration_rate *= 0.98
         else:
             # Long-term depression (LTD)
             self.weights -= effective_lr * features * 0.5
-            self.bias -= float(effective_lr * 0.15)
+            self.bias -= effective_lr * 0.15
             self.metrics['failed_interactions'] += 1
             self.metrics['total_energy_lost'] += abs(energy_delta)
-            self.exploration_rate = float(min(self.exploration_rate * 1.03, 0.6))
+
+            # Fracasso aumenta exploração
+            self.exploration_rate = min(self.exploration_rate * 1.03, 0.6)
 
         # Homeostase sináptica - evita explosão de pesos
         weight_norm = np.linalg.norm(self.weights)
@@ -179,7 +199,7 @@ class ConstraintLearner:
             self.weights = (self.weights / weight_norm) * 2.5
 
         self.weights = np.clip(self.weights, -2.5, 2.5)
-        self.bias = float(np.clip(self.bias, -1.5, 1.5))
+        self.bias = np.clip(self.bias, -1.5, 1.5)
 
         # Armazena na memória de trabalho
         genome_hash = (f"{partner_genome.C:.3f}_{partner_genome.I:.3f}_"
@@ -192,7 +212,9 @@ class ConstraintLearner:
         ))
 
     def get_cognitive_profile(self) -> str:
-        """Classifica o agente baseado em sua história de interações."""
+        """
+        Classifica o agente baseado em sua história de interações.
+        """
         total = (self.metrics['successful_interactions'] +
                 self.metrics['failed_interactions'])
 
@@ -211,7 +233,9 @@ class ConstraintLearner:
             return "Cauteloso"
 
     def get_preferences(self) -> str:
-        """Descreve preferências aprendidas baseadas nos pesos dominantes."""
+        """
+        Descreve preferências aprendidas baseadas nos pesos dominantes.
+        """
         labels = ["Química", "Informação", "Energia", "Função"]
         max_idx = np.argmax(np.abs(self.weights))
 
@@ -229,13 +253,13 @@ class ConstraintLearner:
         return {
             'profile': self.get_cognitive_profile(),
             'preferences': self.get_preferences(),
-            'exploration_rate': round(float(self.exploration_rate), 3),
-            'learning_rate': round(float(self.learning_rate), 3),
+            'exploration_rate': round(self.exploration_rate, 3),
+            'learning_rate': round(self.learning_rate, 3),
             'memory_size': len(self.working_memory),
             'total_interactions': total,
-            'success_rate': (round(float(self.metrics['successful_interactions'] / max(1, total)), 2)),
-            'avg_prediction_error': (round(float(np.mean(self.metrics['prediction_errors'])), 3)
+            'success_rate': (round(self.metrics['successful_interactions'] / max(1, total), 2)),
+            'avg_prediction_error': (round(np.mean(self.metrics['prediction_errors']), 3)
                                    if self.metrics['prediction_errors'] else 0),
-            'weights': [round(float(w), 3) for w in self.weights.tolist()],
-            'bias': round(float(self.bias), 3)
+            'weights': [round(w, 3) for w in self.weights.tolist()],
+            'bias': round(self.bias, 3)
         }

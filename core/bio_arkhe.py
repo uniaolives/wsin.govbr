@@ -153,7 +153,7 @@ class BioAgent:
         return self.alive and self.health > 0
 
     def get_position(self) -> Tuple[float, float, float]:
-        return (float(self.position[0]), float(self.position[1]), float(self.position[2]))
+        return (self.position[0], self.position[1], self.position[2])
 
     def apply_physics(self, dt: float, field_size: Tuple[int, ...]) -> None:
         """
@@ -171,7 +171,7 @@ class BioAgent:
 
         # Metabolismo: custo de movimento + manutenção basal
         speed = np.linalg.norm(self.velocity)
-        movement_cost = float(speed * speed * 0.001)  # Custo quadrático
+        movement_cost = speed * speed * 0.001  # Custo quadrático
         base_cost = 0.0005 * (1.1 - self.genome.E)
         self.health -= (movement_cost + base_cost) * dt
 

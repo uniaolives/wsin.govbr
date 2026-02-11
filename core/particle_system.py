@@ -47,8 +47,7 @@ class SpatialHash:
                     cell_key = (center_cell[0] + dx,
                                center_cell[1] + dy,
                                center_cell[2] + dz)
-                    if cell_key in self.grid:
-                        neighbors.extend(list(self.grid[cell_key]))
+                    neighbors.extend(self.grid.get(cell_key, []))
         return neighbors
 
     def clear(self) -> None:
@@ -75,8 +74,10 @@ class BioGenesisEngine:
 
         # Estatísticas
         self.stats = {
+            'births': 0,
+            'deaths': 0,
             'bonds_formed': 0,
-            'deaths': 0
+            'bonds_broken': 0
         }
 
         # Inicializa população com estrutura tribal
@@ -88,6 +89,7 @@ class BioGenesisEngine:
     def _initialize_population(self, num_agents: int) -> None:
         """
         Cria população inicial com 3 tribos distintas.
+        Cada tribo tem preferência química (C) similar, incentivando clustering.
         """
         # Centros das tribos
         tribe_centers = [
@@ -107,10 +109,10 @@ class BioGenesisEngine:
 
             # Genoma com química tribal + variação individual
             genome = ArkheGenome(
-                C=float(np.clip(base_chemistry[tribe] + np.random.normal(0, 0.08), 0.1, 0.9)),
-                I=random.uniform(0.2, 0.8),
-                E=random.uniform(0.4, 1.0),
-                F=random.uniform(0.2, 0.8)
+                C=np.clip(base_chemistry[tribe] + np.random.normal(0, 0.08), 0.1, 0.9),
+                I=np.random.uniform(0.2, 0.8),
+                E=np.random.uniform(0.4, 1.0),
+                F=np.random.uniform(0.2, 0.8)
             )
 
             agent = BioAgent(self.next_id, pos[0], pos[1], pos[2], genome)
@@ -143,6 +145,7 @@ class BioGenesisEngine:
     def update(self, dt: float = 0.1) -> None:
         """
         Loop principal de simulação.
+        Executa em ordem: campo físico → percepção → decisão → ação → aprendizado
         """
         self.simulation_time += dt
 
@@ -226,10 +229,11 @@ class BioGenesisEngine:
     def _process_interactions(self) -> None:
         """
         Detecta colisões e processa interações sociais.
+        Usa spatial hash para O(N) em vez de O(N²).
         """
         processed_pairs = set()
 
-        for agent in list(self.agents.values()):
+        for agent in self.agents.values():
             if not agent.is_alive():
                 continue
 
@@ -237,6 +241,7 @@ class BioGenesisEngine:
             nearby_ids = self.spatial_hash.query(agent.position, radius=4.0)
 
             for other_id in nearby_ids:
+                # Evita duplicatas e auto-interação
                 if other_id <= agent.id:
                     continue
                 if other_id not in self.agents:
@@ -282,17 +287,17 @@ class BioGenesisEngine:
                     # Potencial nova conexão: avaliação cognitiva bilateral
                     if len(agent.connections) < 6 and len(other.connections) < 6:
                         if agent.brain and other.brain:
-                            score_a, reasoning_a = agent.brain.evaluate_partner(
+                            score_a = agent.brain.evaluate_partner(
                                 other.genome, self.simulation_time
-                            )
-                            score_b, reasoning_b = other.brain.evaluate_partner(
+                            )[0]
+                            score_b = other.brain.evaluate_partner(
                                 agent.genome, self.simulation_time
-                            )
+                            )[0]
 
                             # Consenso para conexão (ambos devem querer)
                             if score_a > 0.05 and score_b > 0.05:
                                 success = agent.form_bond(other,
-                                    strength=float((score_a + score_b) / 2))
+                                    strength=(score_a + score_b) / 2)
                                 if success:
                                     self.stats['bonds_formed'] += 1
 
@@ -317,6 +322,7 @@ class BioGenesisEngine:
     def _apply_learning_feedback(self, previous_health: Dict[int, float]) -> None:
         """
         Aplica aprendizado Hebbiano baseado na mudança de energia (delta).
+        Distribui o "crédito" ou "culpa" entre os vizinhos conectados.
         """
         for agent_id, agent in self.agents.items():
             if not agent.is_alive() or not agent.brain:
@@ -324,13 +330,15 @@ class BioGenesisEngine:
 
             delta_health = agent.health - previous_health.get(agent_id, agent.health)
 
+            # Aprendizado só ocorre se houve mudança significativa
             if abs(delta_health) > 0.0005 and agent.connections:
+                # Divide o feedback entre os vizinhos
                 share = delta_health / len(agent.connections)
 
                 for neighbor_id in agent.connections:
                     if neighbor_id in self.agents:
                         neighbor = self.agents[neighbor_id]
-                        if neighbor.is_alive():
+                        if neighbor.is_alive() and neighbor.brain:
                             agent.brain.learn_from_experience(
                                 neighbor.genome, share, self.simulation_time
                             )
@@ -344,60 +352,92 @@ class BioGenesisEngine:
 
         for aid in dead_ids:
             agent = self.agents[aid]
+
+            # Notifica vizinhos da morte (aprendizado negativo)
             for neighbor_id in agent.connections:
                 if neighbor_id in self.agents:
                     neighbor = self.agents[neighbor_id]
                     neighbor.break_bond(aid)
+
                     if neighbor.brain:
                         neighbor.brain.learn_from_experience(
                             agent.genome, -0.2, self.simulation_time
                         )
+
             del self.agents[aid]
             self.stats['deaths'] += 1
 
     def inject_signal(self, x: float, y: float, z: float,
                      strength: float = 15.0) -> None:
+        """API para injetar sinal externo (interação do usuário)."""
         self.field.add_signal(x, y, z, strength)
 
     def get_render_data(self) -> Tuple[List, List, List, List]:
-        positions, healths, connections, profiles = [], [], [], []
+        """
+        Retorna dados para visualização.
+        Formato: (posições, saúdes, conexões, perfis)
+        """
+        positions = []
+        healths = []
+        connections = []
+        profiles = []
+
         for agent in self.agents.values():
             if not agent.is_alive():
                 continue
-            positions.append(agent.position.copy().tolist())
-            healths.append(float(agent.health))
-            connections.append(list(agent.connections))
-            profiles.append(agent.brain.get_cognitive_profile() if agent.brain else "N/A")
+
+            positions.append(agent.position.copy())
+            healths.append(agent.health)
+            connections.append(agent.connections.copy())
+
+            if agent.brain:
+                profiles.append(agent.brain.get_cognitive_profile())
+            else:
+                profiles.append("Sem cérebro")
+
         return positions, healths, connections, profiles
 
     def get_stats(self) -> dict:
+        """Retorna estatísticas da simulação."""
         alive = [a for a in self.agents.values() if a.is_alive()]
         return {
             'agents': len(alive),
             'time': round(self.simulation_time, 1),
             'bonds': self.stats['bonds_formed'],
             'deaths': self.stats['deaths'],
-            'avg_health': round(float(np.mean([a.health for a in alive])), 3) if alive else 0
+            'avg_health': round(np.mean([a.health for a in alive]), 3) if alive else 0
         }
 
     def get_agent_info(self, agent_id: int) -> Optional[dict]:
+        """Retorna informações detalhadas de um agente específico."""
         if agent_id not in self.agents:
             return None
+
         agent = self.agents[agent_id]
         if not agent.is_alive():
             return None
+
         info = {
             'id': agent.id,
             'position': agent.get_position(),
-            'health': round(float(agent.health), 3),
-            'age': round(float(agent.age), 1),
+            'health': round(agent.health, 3),
+            'age': round(agent.age, 1),
             'state': agent.state,
-            'genome': {'C': round(agent.genome.C, 2), 'I': round(agent.genome.I, 2),
-                       'E': round(agent.genome.E, 2), 'F': round(agent.genome.F, 2)},
+            'genome': {
+                'C': round(agent.genome.C, 2),
+                'I': round(agent.genome.I, 2),
+                'E': round(agent.genome.E, 2),
+                'F': round(agent.genome.F, 2)
+            },
             'connections': len(agent.connections),
-            'profile': agent.brain.get_cognitive_profile() if agent.brain else "N/A",
-            'preferences': agent.brain.get_preferences() if agent.brain else "N/A"
+            'profile': (agent.brain.get_cognitive_profile()
+                       if agent.brain else "N/A"),
+            'preferences': (agent.brain.get_preferences()
+                          if agent.brain else "N/A")
         }
+
         if agent.brain:
-            info['cognitive_state'] = agent.brain.get_cognitive_state()
+            cog = agent.brain.get_cognitive_state()
+            info['cognitive_state'] = cog
+
         return info
