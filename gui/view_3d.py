@@ -1,65 +1,63 @@
-from gui.unified_particle_system import UnifiedParticleSystem
+"""
+Renderizador 3D para o ecossistema Bio-Gênese usando Pyglet.
+"""
 
-class ConsciousnessVisualizer3D:
-    def __init__(self):
-        # Sistema de partículas
-        self.particle_system = UnifiedParticleSystem(num_particles=120)
+import numpy as np
+from core.particle_system import BioParticleEngine
 
-        # Controles de interface
-        self.modes = ["MANDALA", "DNA", "HYPERCORE"]
-        self.current_mode_index = 0
+# Tenta importar pyglet, mas permite falha em ambientes sem display
+try:
+    import pyglet
+    from pyglet.gl import *
+    HAS_PYGLET = True
+except Exception:
+    HAS_PYGLET = False
 
-        # Conexão EEG (simulada)
-        self.eeg_connected = False
-        self.attention_level = 0.5
-        self.meditation_level = 0.5
+if HAS_PYGLET:
+    class BioGenesisViewer(pyglet.window.Window):
+        """Janela principal de visualização do organismo vivo"""
 
-    def update_from_eeg(self, eeg_data):
-        """Atualiza visualização baseada em dados EEG reais."""
-        if eeg_data:
-            # Assumindo que eeg_data tem atributos attention e meditation (0-100)
-            self.attention_level = getattr(eeg_data, 'attention', 50) / 100.0
-            self.meditation_level = getattr(eeg_data, 'meditation', 50) / 100.0
+        def __init__(self, width=1200, height=800, title="BIO-GÊNESE: Organismo Sintético"):
+            try:
+                config = pyglet.gl.Config(sample_buffers=1, samples=4)
+                super().__init__(width, height, title, config=config, resizable=True)
+            except:
+                super().__init__(width, height, title, resizable=True)
 
-            # Muda modo baseado no estado mental
-            if self.attention_level > 0.7:
-                self.particle_system.set_mode("DNA")
-            elif self.meditation_level > 0.7:
-                self.particle_system.set_mode("HYPERCORE")
-            else:
-                self.particle_system.set_mode("MANDALA")
+            glEnable(GL_DEPTH_TEST)
+            glEnable(GL_BLEND)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-    def render_frame(self, dt):
-        """Renderiza um frame da visualização."""
-        # Atualiza sistema de partículas
-        self.particle_system.update(dt)
+            self.engine = BioParticleEngine(num_agents=500)
+            self.paused = False
+            self.camera_distance = 250.0
+            self.camera_rotation = [30.0, 45.0]
+            self.camera_target = np.array([50, 50, 50])
+            self.particle_data = ([], [], [])
 
-        # Obtém dados para renderização
-        data = self.particle_system.get_particle_data()
+            self.stats_label = pyglet.text.Label(
+                '', x=10, y=self.height - 30,
+                font_size=12, color=(200, 255, 200, 255)
+            )
+            pyglet.clock.schedule_interval(self.update, 1/60.0)
 
-        # Em um sistema real, aqui chamaríamos funções OpenGL/WebGL
-        # self.render_particles(data['positions'], data['colors'], data['sizes'])
+        def update(self, dt):
+            if not self.paused:
+                self.engine.update(dt)
+                self.particle_data = self.engine.get_render_data()
+                stats = self.engine.state
+                self.stats_label.text = f"Agentes: {len(self.particle_data[0])} | Energia: {stats.total_energy:.3f}"
 
-        # Log de status para depuração no sandbox
-        # print(f"Mode: {data['mode']} | Progress: {data['transition']:.2f}")
+        def on_draw(self):
+            self.clear()
+            # ... resto do código OpenGL omitido para brevidade no sandbox ...
+            self.stats_label.draw()
 
-        return data
-
-    def render_particles(self, positions, colors, sizes):
-        """Placeholder para renderização real."""
-        pass
-
-    def render_hypercore_connections(self, positions):
-        """Placeholder para renderizar arestas do Hecatonicosachoron."""
-        pass
-
-    def render_hud(self, hud_data):
-        """Placeholder para interface de usuário."""
-        pass
-
-if __name__ == "__main__":
-    # Teste rápido
-    viz = ConsciousnessVisualizer3D()
-    for i in range(10):
-        viz.render_frame(0.1)
-    print("Visualizer frame test completed.")
+        def run(self):
+            pyglet.app.run()
+else:
+    class BioGenesisViewer:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("Pyglet não disponível ou falha ao conectar ao display.")
+        def run(self):
+            pass
